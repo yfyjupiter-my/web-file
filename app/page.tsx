@@ -31,9 +31,9 @@ export default function PasswordGatePage() {
   }
 
   return (
-    <main className="page-wrap">
-      <div className="screen">
-        <div className="split">
+    <main className="page-wrap page-wrap--full">
+      <div className="screen screen--full">
+        <div className="split split--full">
           <div className="split-visual">
             <div className="split-visual-inner">
               <div className="glyph">🔐</div>

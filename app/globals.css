@@ -62,6 +62,23 @@ body {
   .page-wrap .screen {
     width: 100%;
   }
+  .page-wrap--full {
+    padding: 0;
+    min-height: 100vh;
+    align-items: stretch;
+  }
+  .screen.screen--full {
+    max-width: none;
+    height: 100vh;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+  }
+  .split.split--full {
+    height: 100%;
+    min-height: 0;
+  }
 
   /* 5.15 Screen / Panel Container */
   .screen {
