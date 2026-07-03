@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Installer Vault — Wireframe (Alt Layout)</title>
+<style>
+  :root{
+    --g0:#ffffff;
+    --g1:#f3f3f3;
+    --g2:#e4e4e4;
+    --g3:#cfcfcf;
+    --g4:#b0b0b0;
+    --g5:#8f8f8f;
+    --g6:#606060;
+    --g7:#2e2e2e;
+    --line:#a0a0a0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Segoe UI", Arial, sans-serif;
+    background:var(--g1);
+    color:var(--g7);
+  }
+  .page-label{
+    text-align:center;
+    font-size:12px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--g5);
+    padding:26px 0 8px;
+  }
+  .annot{
+    text-align:center;
+    font-size:11px;
+    color:var(--g5);
+    max-width:1200px;
+    margin:0 auto 8px;
+    font-style:italic;
+  }
+  .screen{
+    max-width:1240px;
+    margin:0 auto 64px;
+    background:var(--g0);
+    border:1px solid var(--line);
+    outline:2px dotted var(--g4);
+    outline-offset:-6px;
+    overflow:hidden;
+  }
+  .box{
+    background:var(--g2);
+    border:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--g6);
+    font-size:12px;
+    text-align:center;
+  }
+  .box.solid{background:var(--g3);}
+  .box.dark{background:var(--g6); color:var(--g0);}
+  .box.darker{background:var(--g7); color:var(--g0);}
+  .box.hatch{
+    background:repeating-linear-gradient(135deg, var(--g2), var(--g2) 5px, var(--g1) 5px, var(--g1) 10px);
+  }
+  .line{background:var(--g4);}
+  .line.sm{background:var(--g3);}
+
+  /* ===================== SCREEN 1: split-panel password gate ===================== */
+  .split{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    min-height:480px;
+  }
+  .split-visual{
+    background:var(--g7);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:40px;
+  }
+  .split-visual-inner{
+    width:70%;
+    aspect-ratio:1/1;
+    border:2px dashed var(--g4);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--g3);
+    font-size:12px;
+  }
+  .split-form{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:60px 70px;
+    gap:16px;
+  }
+  .kicker{width:120px;height:14px;}
+  .title-block{width:80%;height:24px;margin-bottom:6px;}
+  .subtitle-block{width:90%;height:12px;margin-bottom:18px;}
+  .field-inline{
+    height:44px;
+    background:var(--g1);
+    border:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    padding:0 14px;
+    font-size:11px;
+    color:var(--g5);
+  }
+  .btn-block{
+    height:44px;
+    background:var(--g7);
+    color:var(--g0);
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;letter-spacing:0.5px;
+  }
+  .helper-text{font-size:10px;color:var(--g5);}
+
+  /* ===================== SCREEN 2: dashboard w/ stat strip + tabs + card grid ===================== */
+  .app-topnav{
+    height:60px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 24px;
+  }
+  .brand-box{width:130px;height:26px;}
+  .topnav-right{display:flex;gap:10px;align-items:center;}
+  .avatar-box{width:32px;height:32px;border-radius:50%;}
+
+  .stat-strip{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    border-bottom:1px solid var(--line);
+  }
+  .stat-cell{
+    padding:18px 22px;
+    border-right:1px solid var(--g3);
+  }
+  .stat-cell:last-child{border-right:none;}
+  .stat-num{width:50%;height:22px;margin-bottom:8px;}
+  .stat-label{width:75%;height:9px;}
+
+  .tabs-row{
+    display:flex;
+    gap:6px;
+    padding:16px 24px 0;
+    border-bottom:1px solid var(--g3);
+    flex-wrap:wrap;
+  }
+  .tab{
+    height:34px;
+    padding:0 18px;
+    background:var(--g2);
+    border:1px solid var(--line);
+    border-bottom:none;
+    display:flex;align-items:center;
+    font-size:11px;color:var(--g6);
+  }
+  .tab.active{background:var(--g0); border-bottom:1px solid var(--g0); position:relative; top:1px; color:var(--g7); font-weight:bold;}
+
+  .toolbar-2{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:18px 24px;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .search-inline{
+    flex:1;
+    min-width:220px;
+    height:36px;
+    background:var(--g1);
+    border:1px solid var(--line);
+    display:flex;align-items:center;padding:0 12px;
+    font-size:11px;color:var(--g5);
+  }
+  .view-toggle{display:flex;border:1px solid var(--line);}
+  .view-toggle > div{width:34px;height:36px;background:var(--g2);}
+  .view-toggle > div.active{background:var(--g6);}
+  .btn-primary-sm{
+    height:36px;padding:0 16px;
+    background:var(--g7); color:var(--g0);
+    display:flex;align-items:center;font-size:11px;
+  }
+
+  .card-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:16px;
+    padding:0 24px 28px;
+  }
+  .file-card{
+    border:1px solid var(--line);
+    background:var(--g0);
+  }
+  .card-thumb{
+    height:80px;
+    background:var(--g2);
+    border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;color:var(--g5);
+    position:relative;
+  }
+  .card-badge{
+    position:absolute;
+    top:8px;right:8px;
+    width:34px;height:16px;
+    background:var(--g6);
+  }
+  .card-body{padding:14px;}
+  .card-title{height:12px;width:85%;margin-bottom:8px;}
+  .card-meta-row{display:flex;justify-content:space-between;margin-bottom:12px;}
+  .card-meta-row .line{height:8px;width:40%;}
+  .card-footer{
+    display:flex;
+    border-top:1px solid var(--g3);
+  }
+  .card-footer > div{
+    flex:1;
+    height:36px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;color:var(--g6);
+  }
+  .card-footer > div:first-child{border-right:1px solid var(--g3); background:var(--g6); color:var(--g0);}
+
+  /* ===================== SCREEN 3: same dashboard, admin drawer open ===================== */
+  .with-drawer{display:flex;}
+  .dashboard-dim{flex:1; filter:grayscale(1) opacity(0.5); pointer-events:none;}
+  .drawer{
+    width:400px;
+    flex-shrink:0;
+    background:var(--g0);
+    border-left:1px solid var(--g7);
+    display:flex;
+    flex-direction:column;
+  }
+  .drawer-header{
+    height:56px;
+    border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 20px;
+  }
+  .drawer-body{padding:20px; flex:1; overflow:auto;}
+  .drawer-dropzone{
+    height:120px;
+    border:2px dashed var(--g4);
+    background:var(--g1);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;
+    margin-bottom:18px;
+  }
+  .drawer-field{margin-bottom:16px;}
+  .drawer-field-label{font-size:10px;color:var(--g6);margin-bottom:6px;}
+  .drawer-input{height:38px;background:var(--g1);border:1px solid var(--line);}
+  .drawer-footer{
+    border-top:1px solid var(--line);
+    padding:16px 20px;
+    display:flex;gap:10px;
+  }
+  .drawer-footer > div{flex:1;height:38px;display:flex;align-items:center;justify-content:center;font-size:11px;}
+
+  /* existing file list mini (inside dim area, showing context) */
+  .mini-list{padding:20px 24px;}
+  .mini-row{
+    display:flex;align-items:center;gap:14px;
+    height:52px;border-bottom:1px solid var(--g3);
+  }
+  .mini-icon{width:30px;height:30px;flex-shrink:0;}
+  .mini-lines{flex:1;}
+  .mini-line-a{height:9px;width:50%;background:var(--g4);margin-bottom:5px;}
+  .mini-line-b{height:7px;width:30%;background:var(--g3);}
+  .mini-dl{width:70px;height:26px;background:var(--g5);}
+
+  /* ===================== SCREEN 4: inline replace conflict (toast style, not modal) ===================== */
+  .toast-wrap{
+    padding:60px 24px;
+    display:flex;
+    justify-content:center;
+  }
+  .toast{
+    width:460px;
+    border:1px solid var(--g7);
+    background:var(--g0);
+    box-shadow:0 0 0 6px var(--g1);
+  }
+  .toast-strip{height:6px;background:var(--g7);}
+  .toast-body{padding:20px;}
+  .toast-title{height:14px;width:60%;margin-bottom:10px;}
+  .toast-text{height:9px;margin-bottom:6px;}
+  .toast-actions{display:flex;gap:10px;margin-top:16px;}
+  .toast-actions > div{flex:1;height:34px;display:flex;align-items:center;justify-content:center;font-size:10px;}
+
+  /* ===================== SCREEN 5: narrow layout, bottom tab bar app style ===================== */
+  .narrow-shell{max-width:400px;}
+  .narrow-header{
+    height:52px;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 16px;
+    border-bottom:1px solid var(--line);
+  }
+  .narrow-search{
+    margin:14px 16px;
+    height:38px;
+    background:var(--g1);
+    border:1px solid var(--line);
+  }
+  .narrow-cards{padding:0 16px 16px; display:flex; flex-direction:column; gap:10px;}
+  .narrow-card{
+    border:1px solid var(--line);
+    display:flex;align-items:center;gap:12px;
+    padding:12px;
+  }
+  .narrow-icon{width:36px;height:36px;flex-shrink:0;}
+  .narrow-bottom-nav{
+    height:58px;
+    border-top:1px solid var(--line);
+    display:flex;
+  }
+  .narrow-bottom-nav > div{
+    flex:1;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;
+  }
+  .nav-dot{width:18px;height:18px;border-radius:50%;}
+  .nav-text{width:34px;height:6px;}
+  .narrow-bottom-nav > div.active .nav-dot{background:var(--g7);}
+
+  .note{
+    max-width:1240px;
+    margin:0 auto 50px;
+    font-size:12px;
+    color:var(--g5);
+    text-align:center;
+    padding:0 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-label">Screen 1 — Password Gate (split panel)</div>
+<div class="annot">Alt composition: left visual panel + right form, vs. the centered card used in wireframe.html.</div>
+<div class="screen">
+  <div class="split">
+    <div class="split-visual">
+      <div class="split-visual-inner">FULL-BLEED<br>VISUAL / PATTERN AREA</div>
+    </div>
+    <div class="split-form">
+      <div class="box kicker">SECURE ACCESS</div>
+      <div class="box title-block">INSTALLER VAULT</div>
+      <div class="box hatch subtitle-block"></div>
+      <div class="field-inline">Enter shared password…</div>
+      <div class="btn-block">UNLOCK VAULT</div>
+      <div class="helper-text">Session stays unlocked for this browser until you log out.</div>
+    </div>
+  </div>
+</div>
+
+<div class="page-label">Screen 2 — Dashboard: Stat Strip + Tabs + Card Grid</div>
+<div class="annot">Alt composition: no left sidebar. Top stat strip, horizontal category tabs, and a card-grid gallery instead of a data table.</div>
+<div class="screen">
+  <div class="app-topnav">
+    <div class="box brand-box">LOGO / APP NAME</div>
+    <div class="topnav-right">
+      <div class="box" style="width:90px;height:28px;">ADMIN MODE</div>
+      <div class="box dark avatar-box"></div>
+    </div>
+  </div>
+
+  <div class="stat-strip">
+    <div class="stat-cell">
+      <div class="box stat-num"></div>
+      <div class="box line sm stat-label"></div>
+    </div>
+    <div class="stat-cell">
+      <div class="box stat-num"></div>
+      <div class="box line sm stat-label"></div>
+    </div>
+    <div class="stat-cell">
+      <div class="box stat-num"></div>
+      <div class="box line sm stat-label"></div>
+    </div>
+    <div class="stat-cell">
+      <div class="box stat-num"></div>
+      <div class="box line sm stat-label"></div>
+    </div>
+  </div>
+
+  <div class="tabs-row">
+    <div class="tab active">All (24)</div>
+    <div class="tab">OS / Drivers</div>
+    <div class="tab">Productivity</div>
+    <div class="tab">Security / AV</div>
+    <div class="tab">Utilities</div>
+    <div class="tab">Uncategorized</div>
+  </div>
+
+  <div class="toolbar-2">
+    <div class="search-inline">🔍 Search installers…</div>
+    <div class="view-toggle">
+      <div class="active"></div>
+      <div></div>
+    </div>
+    <div class="btn-primary-sm">＋ UPLOAD INSTALLER</div>
+  </div>
+
+  <div class="card-grid">
+    <div class="file-card">
+      <div class="card-thumb">EXE<div class="card-badge"></div></div>
+      <div class="card-body">
+        <div class="box card-title"></div>
+        <div class="card-meta-row"><div class="line"></div><div class="line"></div></div>
+      </div>
+      <div class="card-footer"><div>DOWNLOAD</div><div>⋯</div></div>
+    </div>
+    <div class="file-card">
+      <div class="card-thumb">MSI<div class="card-badge"></div></div>
+      <div class="card-body">
+        <div class="box card-title"></div>
+        <div class="card-meta-row"><div class="line"></div><div class="line"></div></div>
+      </div>
+      <div class="card-footer"><div>DOWNLOAD</div><div>⋯</div></div>
+    </div>
+    <div class="file-card">
+      <div class="card-thumb">DMG<div class="card-badge"></div></div>
+      <div class="card-body">
+        <div class="box card-title"></div>
+        <div class="card-meta-row"><div class="line"></div><div class="line"></div></div>
+      </div>
+      <div class="card-footer"><div>DOWNLOAD</div><div>⋯</div></div>
+    </div>
+    <div class="file-card">
+      <div class="card-thumb">ZIP<div class="card-badge"></div></div>
+      <div class="card-body">
+        <div class="box card-title"></div>
+        <div class="card-meta-row"><div class="line"></div><div class="line"></div></div>
+      </div>
+      <div class="card-footer"><div>DOWNLOAD</div><div>⋯</div></div>
+    </div>
+    <div class="file-card">
+      <div class="card-thumb">PKG<div class="card-badge"></div></div>
+      <div class="card-body">
+        <div class="box card-title"></div>
+        <div class="card-meta-row"><div class="line"></div><div class="line"></div></div>
+      </div>
+      <div class="card-footer"><div>DOWNLOAD</div><div>⋯</div></div>
+    </div>
+    <div class="file-card">
+      <div class="card-thumb">EXE<div class="card-badge"></div></div>
+      <div class="card-body">
+        <div class="box card-title"></div>
+        <div class="card-meta-row"><div class="line"></div><div class="line"></div></div>
+      </div>
+      <div class="card-footer"><div>DOWNLOAD</div><div>⋯</div></div>
+    </div>
+    <div class="file-card">
+      <div class="card-thumb">MSI<div class="card-badge"></div></div>
+      <div class="card-body">
+        <div class="box card-title"></div>
+        <div class="card-meta-row"><div class="line"></div><div class="line"></div></div>
+      </div>
+      <div class="card-footer"><div>DOWNLOAD</div><div>⋯</div></div>
+    </div>
+    <div class="file-card">
+      <div class="card-thumb">ZIP<div class="card-badge"></div></div>
+      <div class="card-body">
+        <div class="box card-title"></div>
+        <div class="card-meta-row"><div class="line"></div><div class="line"></div></div>
+      </div>
+      <div class="card-footer"><div>DOWNLOAD</div><div>⋯</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="page-label">Screen 3 — Admin Upload as Slide-In Drawer</div>
+<div class="annot">Alt composition: upload/replace opens as a right-hand drawer over a dimmed list, instead of a centered modal dialog.</div>
+<div class="screen">
+  <div class="app-topnav">
+    <div class="box brand-box">LOGO / APP NAME</div>
+    <div class="topnav-right">
+      <div class="box darker" style="width:90px;height:28px;">ADMIN: ON</div>
+      <div class="box dark avatar-box"></div>
+    </div>
+  </div>
+  <div class="with-drawer">
+    <div class="dashboard-dim">
+      <div class="mini-list">
+        <div class="mini-row">
+          <div class="box mini-icon">EXE</div>
+          <div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div>
+          <div class="box dl mini-dl">GET</div>
+        </div>
+        <div class="mini-row">
+          <div class="box mini-icon">MSI</div>
+          <div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div>
+          <div class="box dl mini-dl">GET</div>
+        </div>
+        <div class="mini-row">
+          <div class="box mini-icon">DMG</div>
+          <div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div>
+          <div class="box dl mini-dl">GET</div>
+        </div>
+        <div class="mini-row">
+          <div class="box mini-icon">ZIP</div>
+          <div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div>
+          <div class="box dl mini-dl">GET</div>
+        </div>
+      </div>
+    </div>
+    <div class="drawer">
+      <div class="drawer-header">
+        <div class="box hatch" style="height:16px;width:170px;">UPLOAD INSTALLER</div>
+        <div class="box" style="width:24px;height:24px;">✕</div>
+      </div>
+      <div class="drawer-body">
+        <div class="drawer-dropzone">
+          <div class="box" style="width:36px;height:36px;">↑</div>
+          <div style="font-size:10px;color:var(--g5);">Drag file or click to browse</div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">DISPLAY NAME</div>
+          <div class="box drawer-input"></div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">CATEGORY</div>
+          <div class="box drawer-input"></div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">VERSION / DATE</div>
+          <div class="box drawer-input"></div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">NOTES</div>
+          <div class="box drawer-input" style="height:64px;"></div>
+        </div>
+      </div>
+      <div class="drawer-footer">
+        <div class="box solid">CANCEL</div>
+        <div class="box darker">SAVE FILE</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-label">Screen 4 — Duplicate Filename / Delete as Inline Toast</div>
+<div class="annot">Alt composition: replace-conflict and delete-confirm surfaced as a compact toast card, not a full centered dialog.</div>
+<div class="screen">
+  <div class="toast-wrap">
+    <div class="toast">
+      <div class="toast-strip"></div>
+      <div class="toast-body">
+        <div class="box toast-title"></div>
+        <div class="box line toast-text" style="width:95%;"></div>
+        <div class="box line sm toast-text" style="width:70%;"></div>
+        <div class="toast-actions">
+          <div class="box solid">KEEP BOTH</div>
+          <div class="box darker">REPLACE FILE</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-label">Screen 5 — Narrow Layout: Bottom Tab-Bar App Shell</div>
+<div class="annot">Alt composition: instead of a collapsing sidebar, narrow width switches to an app-like shell with a bottom navigation bar.</div>
+<div class="screen narrow-shell">
+  <div class="narrow-header">
+    <div class="box" style="width:100px;height:22px;">LOGO</div>
+    <div class="box dark" style="width:28px;height:28px;border-radius:50%;"></div>
+  </div>
+  <div class="box narrow-search">🔍 Search…</div>
+  <div class="narrow-cards">
+    <div class="narrow-card">
+      <div class="box narrow-icon">EXE</div>
+      <div style="flex:1;">
+        <div class="box line" style="height:10px;width:65%;margin-bottom:6px;"></div>
+        <div class="box line sm" style="height:7px;width:40%;"></div>
+      </div>
+      <div class="box dark" style="width:50px;height:28px;font-size:9px;">GET</div>
+    </div>
+    <div class="narrow-card">
+      <div class="box narrow-icon">MSI</div>
+      <div style="flex:1;">
+        <div class="box line" style="height:10px;width:65%;margin-bottom:6px;"></div>
+        <div class="box line sm" style="height:7px;width:40%;"></div>
+      </div>
+      <div class="box dark" style="width:50px;height:28px;font-size:9px;">GET</div>
+    </div>
+    <div class="narrow-card">
+      <div class="box narrow-icon">ZIP</div>
+      <div style="flex:1;">
+        <div class="box line" style="height:10px;width:65%;margin-bottom:6px;"></div>
+        <div class="box line sm" style="height:7px;width:40%;"></div>
+      </div>
+      <div class="box dark" style="width:50px;height:28px;font-size:9px;">GET</div>
+    </div>
+  </div>
+  <div class="narrow-bottom-nav">
+    <div class="active">
+      <div class="box dark nav-dot"></div>
+      <div class="box line sm nav-text"></div>
+    </div>
+    <div>
+      <div class="box nav-dot"></div>
+      <div class="box line sm nav-text"></div>
+    </div>
+    <div>
+      <div class="box nav-dot"></div>
+      <div class="box line sm nav-text"></div>
+    </div>
+  </div>
+</div>
+
+<div class="note">Wireframe playground (alt layout) — grayscale, medium-fidelity structure only. No brand colors, typography, or final copy. Based on prd.md (Installer Vault). Companion/contrast to wireframe.html.</div>
+
+</body>
+</html>

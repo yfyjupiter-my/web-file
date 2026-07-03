@@ -1,0 +1,70 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function PasswordGatePage() {
+  const router = useRouter();
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+
+    const res = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+
+    setSubmitting(false);
+
+    if (res.ok) {
+      router.push("/dashboard");
+    } else {
+      const data = await res.json().catch(() => ({ error: "Something went wrong." }));
+      setError(data.error ?? "Incorrect password.");
+    }
+  }
+
+  return (
+    <main className="page-wrap">
+      <div className="screen">
+        <div className="split">
+          <div className="split-visual">
+            <div className="split-visual-inner">
+              <div className="glyph">🔐</div>
+              <b>SECURE VAULT</b>
+              <span>Encrypted installer distribution for your team</span>
+            </div>
+          </div>
+          <form className="split-form" onSubmit={handleSubmit}>
+            <span className="pill kicker">● Secure Access</span>
+            <h1>Installer Vault</h1>
+            <div className="sub">
+              Enter the shared password to browse and download the latest verified installers.
+            </div>
+            <label className="field">
+              🔑{" "}
+              <input
+                type="password"
+                placeholder="Enter shared password…"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoFocus
+              />
+            </label>
+            {error && <div className="error-text">{error}</div>}
+            <button className="btn" type="submit" disabled={submitting || !password}>
+              {submitting ? "Checking…" : "Unlock Vault →"}
+            </button>
+            <div className="helper">Session stays unlocked for this browser until you log out.</div>
+          </form>
+        </div>
+      </div>
+    </main>
+  );
+}

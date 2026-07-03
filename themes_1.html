@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="aurora">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Installer Vault — Themes Playground</title>
+<style>
+  /* ============================================================
+     THEME TOKENS — three modern themes swap via [data-theme]
+     ============================================================ */
+
+  /* --- Theme 1: AURORA (dark glass, neon gradient accents) --- */
+  [data-theme="aurora"]{
+    --bg:            #0b0f1a;
+    --bg-2:          #111726;
+    --surface:       rgba(23,30,48,0.72);
+    --surface-2:     rgba(34,44,68,0.72);
+    --surface-solid: #171e30;
+    --border:        rgba(120,140,190,0.18);
+    --border-strong: rgba(140,160,220,0.35);
+    --text:          #e8ecf6;
+    --text-dim:      #9aa6c4;
+    --text-faint:    #5f6b8a;
+    --accent:        #7c5cff;
+    --accent-2:      #22d3ee;
+    --accent-grad:   linear-gradient(120deg,#7c5cff 0%, #22d3ee 100%);
+    --accent-soft:   rgba(124,92,255,0.16);
+    --on-accent:     #ffffff;
+    --shadow:        0 20px 50px -20px rgba(0,0,0,0.7);
+    --radius:        16px;
+    --radius-sm:     10px;
+    --glass-blur:    14px;
+    --page-bg: radial-gradient(1200px 700px at 15% -10%, rgba(124,92,255,0.22), transparent 60%),
+               radial-gradient(1000px 700px at 100% 0%, rgba(34,211,238,0.16), transparent 55%),
+               var(--bg);
+    --font: "Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+  }
+
+  /* --- Theme 2: SUNSET (warm light, coral/amber, soft paper) --- */
+  [data-theme="sunset"]{
+    --bg:            #fdf6f0;
+    --bg-2:          #fbeee4;
+    --surface:       #ffffff;
+    --surface-2:     #fbeede;
+    --surface-solid: #ffffff;
+    --border:        #efd9c8;
+    --border-strong: #e3b79a;
+    --text:          #3a2b26;
+    --text-dim:      #8a6f63;
+    --text-faint:    #b9a294;
+    --accent:        #f0654d;
+    --accent-2:      #f4a340;
+    --accent-grad:   linear-gradient(120deg,#f0654d 0%, #f4a340 100%);
+    --accent-soft:   rgba(240,101,77,0.12);
+    --on-accent:     #ffffff;
+    --shadow:        0 18px 40px -22px rgba(180,90,60,0.35);
+    --radius:        18px;
+    --radius-sm:     11px;
+    --glass-blur:    0px;
+    --page-bg: radial-gradient(900px 600px at 90% -5%, rgba(244,163,64,0.20), transparent 55%),
+               radial-gradient(800px 600px at 0% 10%, rgba(240,101,77,0.10), transparent 55%),
+               var(--bg);
+    --font: "Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+  }
+
+  /* --- Theme 3: NORDIC (cool minimal, slate/teal, crisp) --- */
+  [data-theme="nordic"]{
+    --bg:            #eef1f5;
+    --bg-2:          #e4e9ef;
+    --surface:       #ffffff;
+    --surface-2:     #f2f5f9;
+    --surface-solid: #ffffff;
+    --border:        #d7dee7;
+    --border-strong: #b9c4d1;
+    --text:          #1f2a37;
+    --text-dim:      #5a6b7d;
+    --text-faint:    #93a1b1;
+    --accent:        #2f7d8c;
+    --accent-2:      #4fb0c6;
+    --accent-grad:   linear-gradient(120deg,#2f7d8c 0%, #4fb0c6 100%);
+    --accent-soft:   rgba(47,125,140,0.10);
+    --on-accent:     #ffffff;
+    --shadow:        0 14px 34px -20px rgba(31,42,55,0.30);
+    --radius:        14px;
+    --radius-sm:     9px;
+    --glass-blur:    0px;
+    --page-bg: linear-gradient(180deg,#f4f7fa 0%, var(--bg) 100%);
+    --font: "Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+  }
+
+  /* ============================================================
+     BASE
+     ============================================================ */
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    font-family:var(--font);
+    background:var(--page-bg);
+    background-attachment:fixed;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:80px;
+    transition:background .4s ease, color .3s ease;
+  }
+  .page-label{
+    text-align:center;
+    font-size:12px;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    padding:34px 0 4px;
+    font-weight:600;
+  }
+  .annot{
+    text-align:center;
+    font-size:12px;
+    color:var(--text-dim);
+    max-width:1240px;
+    margin:0 auto 14px;
+  }
+  .screen{
+    max-width:1240px;
+    margin:0 auto 60px;
+    background:var(--surface);
+    backdrop-filter:blur(var(--glass-blur));
+    -webkit-backdrop-filter:blur(var(--glass-blur));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    overflow:hidden;
+    box-shadow:var(--shadow);
+  }
+
+  /* buttons / pills shared */
+  .btn{
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
+    font-weight:600;
+    color:var(--on-accent);
+    background:var(--accent-grad);
+    border-radius:var(--radius-sm);
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    letter-spacing:.3px;
+    transition:transform .15s ease, filter .15s ease, box-shadow .15s ease;
+    box-shadow:0 8px 20px -10px var(--accent);
+  }
+  .btn:hover{transform:translateY(-1px);filter:brightness(1.06);}
+  .btn.ghost{
+    background:transparent;color:var(--text);
+    border:1px solid var(--border-strong);box-shadow:none;
+  }
+  .btn.ghost:hover{background:var(--accent-soft);}
+  .pill{
+    font-size:11px;font-weight:600;
+    padding:5px 11px;border-radius:999px;
+    background:var(--accent-soft);color:var(--accent);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .chip-icon{
+    display:inline-flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:12px;letter-spacing:.5px;
+    color:var(--on-accent);background:var(--accent-grad);
+    border-radius:9px;
+  }
+
+  /* ============================================================
+     THEME SWITCHER (sticky top bar)
+     ============================================================ */
+  .theme-bar{
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;justify-content:center;gap:16px;
+    padding:14px 20px;
+    background:var(--surface);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .theme-bar .brand{
+    font-weight:700;letter-spacing:.3px;margin-right:auto;
+    display:flex;align-items:center;gap:10px;
+  }
+  .theme-bar .brand .mark{width:26px;height:26px;border-radius:8px;background:var(--accent-grad);}
+  .theme-bar .brand small{color:var(--text-dim);font-weight:500;}
+  .swatch-row{display:flex;gap:10px;align-items:center;}
+  .swatch{
+    cursor:pointer;border:2px solid transparent;
+    border-radius:12px;padding:8px 14px;
+    display:flex;align-items:center;gap:10px;
+    background:var(--surface-2);color:var(--text);
+    font-size:13px;font-weight:600;
+    transition:border-color .15s ease, transform .15s ease;
+  }
+  .swatch:hover{transform:translateY(-1px);}
+  .swatch .dots{display:flex;gap:4px;}
+  .swatch .dots i{width:12px;height:12px;border-radius:50%;display:block;}
+  .swatch[data-set="aurora"] .dots i:nth-child(1){background:#7c5cff;}
+  .swatch[data-set="aurora"] .dots i:nth-child(2){background:#22d3ee;}
+  .swatch[data-set="aurora"] .dots i:nth-child(3){background:#0b0f1a;}
+  .swatch[data-set="sunset"] .dots i:nth-child(1){background:#f0654d;}
+  .swatch[data-set="sunset"] .dots i:nth-child(2){background:#f4a340;}
+  .swatch[data-set="sunset"] .dots i:nth-child(3){background:#fdf6f0;}
+  .swatch[data-set="nordic"] .dots i:nth-child(1){background:#2f7d8c;}
+  .swatch[data-set="nordic"] .dots i:nth-child(2){background:#4fb0c6;}
+  .swatch[data-set="nordic"] .dots i:nth-child(3){background:#eef1f5;}
+  .swatch.active{border-color:var(--accent);}
+
+  /* ============================================================
+     SCREEN 1 — split password gate
+     ============================================================ */
+  .split{display:grid;grid-template-columns:1fr 1fr;min-height:480px;}
+  .split-visual{
+    position:relative;overflow:hidden;
+    background:var(--accent-grad);
+    display:flex;align-items:center;justify-content:center;padding:40px;
+  }
+  .split-visual::before{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(300px 300px at 20% 30%, rgba(255,255,255,.28), transparent 60%),
+      radial-gradient(280px 280px at 80% 75%, rgba(255,255,255,.18), transparent 60%);
+    mix-blend-mode:screen;
+  }
+  .split-visual-inner{
+    position:relative;z-index:1;
+    width:74%;aspect-ratio:1/1;border-radius:24px;
+    border:1.5px solid rgba(255,255,255,.35);
+    background:rgba(255,255,255,.08);
+    backdrop-filter:blur(6px);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    color:#fff;text-align:center;
+  }
+  .split-visual-inner .glyph{font-size:52px;}
+  .split-visual-inner b{font-size:15px;letter-spacing:2px;}
+  .split-visual-inner span{font-size:12px;opacity:.85;max-width:70%;}
+  .split-form{
+    display:flex;flex-direction:column;justify-content:center;
+    padding:56px 64px;gap:14px;background:var(--surface-solid);
+  }
+  .split-form .kicker{align-self:flex-start;}
+  .split-form h1{margin:6px 0 2px;font-size:30px;letter-spacing:-.5px;}
+  .split-form .sub{color:var(--text-dim);font-size:14px;margin-bottom:14px;line-height:1.5;}
+  .field{
+    height:48px;border-radius:var(--radius-sm);
+    background:var(--surface-2);border:1px solid var(--border);
+    display:flex;align-items:center;padding:0 16px;gap:10px;
+    font-size:14px;color:var(--text-dim);
+  }
+  .field:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .field input{
+    border:none;background:transparent;outline:none;flex:1;
+    font-family:inherit;font-size:14px;color:var(--text);
+  }
+  .split-form .btn{height:48px;font-size:14px;margin-top:4px;}
+  .helper{font-size:12px;color:var(--text-faint);}
+
+  /* ============================================================
+     SCREEN 2 — dashboard
+     ============================================================ */
+  .app-topnav{
+    height:66px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;padding:0 26px;
+    background:var(--surface-solid);
+  }
+  .app-topnav .logo{display:flex;align-items:center;gap:11px;font-weight:700;font-size:16px;}
+  .app-topnav .logo .mark{width:30px;height:30px;border-radius:9px;background:var(--accent-grad);}
+  .topnav-right{display:flex;gap:12px;align-items:center;}
+  .avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-grad);flex-shrink:0;}
+
+  .stat-strip{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface-solid);border-bottom:1px solid var(--border);}
+  .stat-cell{padding:22px 24px;border-right:1px solid var(--border);}
+  .stat-cell:last-child{border-right:none;}
+  .stat-num{font-size:30px;font-weight:700;letter-spacing:-1px;}
+  .stat-num .up{font-size:13px;color:var(--accent);font-weight:600;margin-left:6px;}
+  .stat-label{font-size:12px;color:var(--text-dim);margin-top:4px;}
+
+  .tabs-row{display:flex;gap:6px;padding:16px 24px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--surface-solid);}
+  .tab{
+    height:38px;padding:0 18px;border-radius:10px 10px 0 0;
+    display:flex;align-items:center;font-size:13px;color:var(--text-dim);
+    cursor:pointer;font-weight:500;border-bottom:2px solid transparent;
+  }
+  .tab:hover{color:var(--text);}
+  .tab.active{color:var(--accent);font-weight:700;border-bottom:2px solid var(--accent);}
+
+  .toolbar-2{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;gap:14px;flex-wrap:wrap;background:var(--surface-solid);}
+  .search-inline{
+    flex:1;min-width:220px;height:42px;border-radius:var(--radius-sm);
+    background:var(--surface-2);border:1px solid var(--border);
+    display:flex;align-items:center;padding:0 14px;gap:10px;font-size:14px;color:var(--text-dim);
+  }
+  .search-inline input{border:none;background:transparent;outline:none;flex:1;font-family:inherit;font-size:14px;color:var(--text);}
+  .view-toggle{display:flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
+  .view-toggle > div{width:40px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-faint);background:var(--surface-2);}
+  .view-toggle > div.active{background:var(--accent);color:var(--on-accent);}
+  .btn-upload{height:42px;padding:0 18px;font-size:13px;}
+
+  .card-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;padding:0 24px 30px;background:var(--surface-solid);}
+  .file-card{
+    border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;
+    background:var(--surface);transition:transform .18s ease, box-shadow .18s ease, border-color .18s;
+  }
+  .file-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--border-strong);}
+  .card-thumb{
+    height:92px;position:relative;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--surface-2),var(--surface));
+    border-bottom:1px solid var(--border);
+  }
+  .card-thumb .type{font-size:15px;font-weight:800;letter-spacing:1px;color:var(--accent);}
+  .card-badge{position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);}
+  .card-body{padding:14px 16px;}
+  .card-title{font-size:14px;font-weight:600;margin-bottom:4px;}
+  .card-meta{font-size:12px;color:var(--text-dim);display:flex;justify-content:space-between;}
+  .card-footer{display:flex;border-top:1px solid var(--border);}
+  .card-footer > div{flex:1;height:40px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-dim);}
+  .card-footer > div:hover{color:var(--text);}
+  .card-footer .dl{background:var(--accent-soft);color:var(--accent);border-right:1px solid var(--border);}
+
+  /* ============================================================
+     SCREEN 3 — drawer
+     ============================================================ */
+  .with-drawer{display:flex;position:relative;background:var(--surface-solid);}
+  .dashboard-dim{flex:1;opacity:.45;pointer-events:none;}
+  .mini-list{padding:20px 24px;}
+  .mini-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border);}
+  .mini-icon{width:38px;height:38px;border-radius:10px;flex-shrink:0;}
+  .mini-lines{flex:1;}
+  .mini-line-a{height:11px;width:55%;border-radius:6px;background:var(--surface-2);margin-bottom:7px;}
+  .mini-line-b{height:8px;width:32%;border-radius:6px;background:var(--surface-2);}
+  .mini-dl{width:70px;height:30px;border-radius:8px;background:var(--accent-soft);}
+  .drawer{
+    width:410px;flex-shrink:0;background:var(--surface-solid);
+    border-left:1px solid var(--border-strong);display:flex;flex-direction:column;
+    box-shadow:-24px 0 50px -30px rgba(0,0,0,.5);
+  }
+  .drawer-header{height:60px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-weight:700;}
+  .drawer-header .x{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);cursor:pointer;color:var(--text-dim);}
+  .drawer-body{padding:22px;flex:1;overflow:auto;}
+  .drawer-dropzone{
+    height:130px;border:2px dashed var(--border-strong);border-radius:var(--radius);
+    background:var(--accent-soft);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-bottom:20px;
+  }
+  .drawer-dropzone .up{width:44px;height:44px;border-radius:12px;background:var(--accent-grad);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;}
+  .drawer-dropzone small{font-size:12px;color:var(--text-dim);}
+  .drawer-field{margin-bottom:16px;}
+  .drawer-field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-bottom:7px;font-weight:600;}
+  .drawer-input{width:100%;height:42px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px solid var(--border);padding:0 14px;font-family:inherit;font-size:14px;color:var(--text);outline:none;}
+  .drawer-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  textarea.drawer-input{height:70px;padding-top:11px;resize:none;}
+  .drawer-footer{border-top:1px solid var(--border);padding:18px 22px;display:flex;gap:12px;}
+  .drawer-footer .btn{flex:1;height:44px;}
+
+  /* ============================================================
+     SCREEN 4 — toast
+     ============================================================ */
+  .toast-wrap{padding:64px 24px;display:flex;justify-content:center;background:var(--surface-solid);}
+  .toast{width:480px;border-radius:var(--radius);overflow:hidden;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);}
+  .toast-strip{height:5px;background:var(--accent-grad);}
+  .toast-body{padding:24px;}
+  .toast-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .toast-head .ic{width:38px;height:38px;border-radius:11px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .toast-title{font-size:16px;font-weight:700;}
+  .toast-text{font-size:13px;color:var(--text-dim);line-height:1.55;margin-bottom:6px;}
+  .toast-actions{display:flex;gap:12px;margin-top:18px;}
+  .toast-actions .btn{flex:1;height:40px;font-size:13px;}
+
+  /* ============================================================
+     SCREEN 5 — narrow app shell
+     ============================================================ */
+  .narrow-shell{max-width:420px;}
+  .narrow-header{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid var(--border);background:var(--surface-solid);}
+  .narrow-header .logo{display:flex;align-items:center;gap:9px;font-weight:700;}
+  .narrow-header .logo .mark{width:26px;height:26px;border-radius:8px;background:var(--accent-grad);}
+  .narrow-search{margin:16px 18px;height:44px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:10px;color:var(--text-dim);font-size:14px;}
+  .narrow-cards{padding:0 18px 18px;display:flex;flex-direction:column;gap:12px;}
+  .narrow-card{border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:center;gap:14px;padding:14px;background:var(--surface-solid);}
+  .narrow-icon{width:44px;height:44px;border-radius:12px;flex-shrink:0;background:var(--accent-grad);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;}
+  .narrow-card .meta{flex:1;}
+  .narrow-card .meta b{display:block;font-size:14px;margin-bottom:3px;}
+  .narrow-card .meta small{font-size:12px;color:var(--text-dim);}
+  .narrow-get{width:56px;height:34px;border-radius:9px;font-size:12px;}
+  .narrow-bottom-nav{height:64px;border-top:1px solid var(--border);display:flex;background:var(--surface-solid);}
+  .narrow-bottom-nav > div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--text-faint);font-size:11px;cursor:pointer;}
+  .narrow-bottom-nav .nav-dot{width:22px;height:22px;border-radius:8px;background:var(--surface-2);}
+  .narrow-bottom-nav > div.active{color:var(--accent);}
+  .narrow-bottom-nav > div.active .nav-dot{background:var(--accent-grad);}
+
+  .note{max-width:1240px;margin:0 auto;font-size:12px;color:var(--text-faint);text-align:center;padding:10px 20px 0;}
+
+  @media(max-width:820px){
+    .split{grid-template-columns:1fr;}
+    .split-visual{min-height:220px;}
+    .stat-strip{grid-template-columns:repeat(2,1fr);}
+    .card-grid{grid-template-columns:repeat(2,1fr);}
+    .drawer{width:100%;}
+    .with-drawer{flex-direction:column;}
+    .dashboard-dim{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== THEME SWITCHER ===== -->
+<div class="theme-bar">
+  <div class="brand"><span class="mark"></span>Installer Vault <small>· themes playground</small></div>
+  <div class="swatch-row">
+    <div class="swatch active" data-set="aurora"><span class="dots"><i></i><i></i><i></i></span>Aurora</div>
+    <div class="swatch" data-set="sunset"><span class="dots"><i></i><i></i><i></i></span>Sunset</div>
+    <div class="swatch" data-set="nordic"><span class="dots"><i></i><i></i><i></i></span>Nordic</div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 1 ===== -->
+<div class="page-label">Screen 1 — Password Gate</div>
+<div class="annot">Split panel: full-bleed gradient visual on the left, access form on the right.</div>
+<div class="screen">
+  <div class="split">
+    <div class="split-visual">
+      <div class="split-visual-inner">
+        <div class="glyph">🔐</div>
+        <b>SECURE VAULT</b>
+        <span>Encrypted installer distribution for your team</span>
+      </div>
+    </div>
+    <div class="split-form">
+      <span class="pill kicker">● Secure Access</span>
+      <h1>Installer Vault</h1>
+      <div class="sub">Enter the shared password to browse and download the latest verified installers.</div>
+      <div class="field">🔑 <input type="password" placeholder="Enter shared password…"></div>
+      <button class="btn">Unlock Vault →</button>
+      <div class="helper">Session stays unlocked for this browser until you log out.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 2 ===== -->
+<div class="page-label">Screen 2 — Dashboard</div>
+<div class="annot">Stat strip, category tabs, and a card-grid gallery.</div>
+<div class="screen">
+  <div class="app-topnav">
+    <div class="logo"><span class="mark"></span>Installer Vault</div>
+    <div class="topnav-right">
+      <span class="pill">Admin Mode</span>
+      <div class="avatar"></div>
+    </div>
+  </div>
+
+  <div class="stat-strip">
+    <div class="stat-cell"><div class="stat-num">24 <span class="up">▲ 3</span></div><div class="stat-label">Total installers</div></div>
+    <div class="stat-cell"><div class="stat-num">1.2<span style="font-size:16px">TB</span></div><div class="stat-label">Storage used</div></div>
+    <div class="stat-cell"><div class="stat-num">318</div><div class="stat-label">Downloads this week</div></div>
+    <div class="stat-cell"><div class="stat-num">5</div><div class="stat-label">Categories</div></div>
+  </div>
+
+  <div class="tabs-row">
+    <div class="tab active">All (24)</div>
+    <div class="tab">OS / Drivers</div>
+    <div class="tab">Productivity</div>
+    <div class="tab">Security / AV</div>
+    <div class="tab">Utilities</div>
+    <div class="tab">Uncategorized</div>
+  </div>
+
+  <div class="toolbar-2">
+    <div class="search-inline">🔍 <input placeholder="Search installers…"></div>
+    <div class="view-toggle"><div class="active">▦</div><div>☰</div></div>
+    <button class="btn btn-upload">＋ Upload Installer</button>
+  </div>
+
+  <div class="card-grid">
+    <div class="file-card"><div class="card-thumb"><span class="type">EXE</span><span class="card-badge">v2.4</span></div><div class="card-body"><div class="card-title">Setup Wizard</div><div class="card-meta"><span>84 MB</span><span>Jun 28</span></div></div><div class="card-footer"><div class="dl">Download</div><div>⋯</div></div></div>
+    <div class="file-card"><div class="card-thumb"><span class="type">MSI</span><span class="card-badge">v1.9</span></div><div class="card-body"><div class="card-title">Driver Pack</div><div class="card-meta"><span>210 MB</span><span>Jun 22</span></div></div><div class="card-footer"><div class="dl">Download</div><div>⋯</div></div></div>
+    <div class="file-card"><div class="card-thumb"><span class="type">DMG</span><span class="card-badge">v3.1</span></div><div class="card-body"><div class="card-title">Mac Client</div><div class="card-meta"><span>66 MB</span><span>Jun 19</span></div></div><div class="card-footer"><div class="dl">Download</div><div>⋯</div></div></div>
+    <div class="file-card"><div class="card-thumb"><span class="type">ZIP</span><span class="card-badge">v4.0</span></div><div class="card-body"><div class="card-title">Portable Tools</div><div class="card-meta"><span>41 MB</span><span>Jun 15</span></div></div><div class="card-footer"><div class="dl">Download</div><div>⋯</div></div></div>
+    <div class="file-card"><div class="card-thumb"><span class="type">PKG</span><span class="card-badge">v2.0</span></div><div class="card-body"><div class="card-title">Agent Bundle</div><div class="card-meta"><span>128 MB</span><span>Jun 11</span></div></div><div class="card-footer"><div class="dl">Download</div><div>⋯</div></div></div>
+    <div class="file-card"><div class="card-thumb"><span class="type">EXE</span><span class="card-badge">v6.2</span></div><div class="card-body"><div class="card-title">AV Scanner</div><div class="card-meta"><span>92 MB</span><span>Jun 08</span></div></div><div class="card-footer"><div class="dl">Download</div><div>⋯</div></div></div>
+    <div class="file-card"><div class="card-thumb"><span class="type">MSI</span><span class="card-badge">v1.3</span></div><div class="card-body"><div class="card-title">VPN Client</div><div class="card-meta"><span>38 MB</span><span>Jun 04</span></div></div><div class="card-footer"><div class="dl">Download</div><div>⋯</div></div></div>
+    <div class="file-card"><div class="card-thumb"><span class="type">ZIP</span><span class="card-badge">v5.5</span></div><div class="card-body"><div class="card-title">Font Pack</div><div class="card-meta"><span>19 MB</span><span>Jun 01</span></div></div><div class="card-footer"><div class="dl">Download</div><div>⋯</div></div></div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 3 ===== -->
+<div class="page-label">Screen 3 — Admin Upload Drawer</div>
+<div class="annot">Upload opens as a right-hand drawer over a dimmed list.</div>
+<div class="screen">
+  <div class="app-topnav">
+    <div class="logo"><span class="mark"></span>Installer Vault</div>
+    <div class="topnav-right"><span class="pill">Admin: On</span><div class="avatar"></div></div>
+  </div>
+  <div class="with-drawer">
+    <div class="dashboard-dim">
+      <div class="mini-list">
+        <div class="mini-row"><div class="mini-icon chip-icon">EXE</div><div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div><div class="mini-dl"></div></div>
+        <div class="mini-row"><div class="mini-icon chip-icon">MSI</div><div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div><div class="mini-dl"></div></div>
+        <div class="mini-row"><div class="mini-icon chip-icon">DMG</div><div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div><div class="mini-dl"></div></div>
+        <div class="mini-row"><div class="mini-icon chip-icon">ZIP</div><div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div><div class="mini-dl"></div></div>
+      </div>
+    </div>
+    <div class="drawer">
+      <div class="drawer-header">Upload Installer <div class="x">✕</div></div>
+      <div class="drawer-body">
+        <div class="drawer-dropzone">
+          <div class="up">↑</div>
+          <small>Drag file here or click to browse</small>
+        </div>
+        <div class="drawer-field"><label>Display Name</label><input class="drawer-input" placeholder="e.g. Setup Wizard 2.4"></div>
+        <div class="drawer-field"><label>Category</label><input class="drawer-input" placeholder="Select category…"></div>
+        <div class="drawer-field"><label>Version / Date</label><input class="drawer-input" placeholder="v2.4 · Jun 28, 2026"></div>
+        <div class="drawer-field"><label>Notes</label><textarea class="drawer-input" placeholder="Optional release notes…"></textarea></div>
+      </div>
+      <div class="drawer-footer">
+        <button class="btn ghost">Cancel</button>
+        <button class="btn">Save File</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 4 ===== -->
+<div class="page-label">Screen 4 — Replace Conflict Toast</div>
+<div class="annot">Duplicate-filename conflict surfaced as a compact toast card.</div>
+<div class="screen">
+  <div class="toast-wrap">
+    <div class="toast">
+      <div class="toast-strip"></div>
+      <div class="toast-body">
+        <div class="toast-head"><div class="ic">⚠</div><div class="toast-title">File already exists</div></div>
+        <div class="toast-text">An installer named <b>setup-wizard.exe</b> is already in this category. Replacing it will overwrite the existing version for everyone.</div>
+        <div class="toast-text">Keep both to save this upload as a separate copy.</div>
+        <div class="toast-actions">
+          <button class="btn ghost">Keep Both</button>
+          <button class="btn">Replace File</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 5 ===== -->
+<div class="page-label">Screen 5 — Narrow App Shell</div>
+<div class="annot">Compact width switches to a mobile app shell with bottom navigation.</div>
+<div class="screen narrow-shell">
+  <div class="narrow-header">
+    <div class="logo"><span class="mark"></span>Vault</div>
+    <div class="avatar" style="width:30px;height:30px;"></div>
+  </div>
+  <div class="narrow-search">🔍 Search…</div>
+  <div class="narrow-cards">
+    <div class="narrow-card"><div class="narrow-icon">EXE</div><div class="meta"><b>Setup Wizard</b><small>84 MB · v2.4</small></div><button class="btn narrow-get">Get</button></div>
+    <div class="narrow-card"><div class="narrow-icon">MSI</div><div class="meta"><b>Driver Pack</b><small>210 MB · v1.9</small></div><button class="btn narrow-get">Get</button></div>
+    <div class="narrow-card"><div class="narrow-icon">ZIP</div><div class="meta"><b>Portable Tools</b><small>41 MB · v4.0</small></div><button class="btn narrow-get">Get</button></div>
+  </div>
+  <div class="narrow-bottom-nav">
+    <div class="active"><div class="nav-dot"></div>Files</div>
+    <div><div class="nav-dot"></div>Search</div>
+    <div><div class="nav-dot"></div>Settings</div>
+  </div>
+</div>
+
+<div class="note">Themes playground — three interchangeable modern styles (Aurora · Sunset · Nordic) driven by CSS custom properties. Based on wireframe-2.html (Installer Vault).</div>
+
+<script>
+  const root = document.documentElement;
+  document.querySelectorAll('.swatch').forEach(sw=>{
+    sw.addEventListener('click', ()=>{
+      document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
+      sw.classList.add('active');
+      root.setAttribute('data-theme', sw.dataset.set);
+    });
+  });
+</script>
+
+</body>
+</html>

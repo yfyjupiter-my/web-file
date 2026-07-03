@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Installer Vault — Wireframe</title>
+<style>
+  :root{
+    --g0:#ffffff;
+    --g1:#f2f2f2;
+    --g2:#e0e0e0;
+    --g3:#c9c9c9;
+    --g4:#a8a8a8;
+    --g5:#8a8a8a;
+    --g6:#5c5c5c;
+    --g7:#333333;
+    --line:#999999;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Segoe UI", Arial, sans-serif;
+    background:var(--g1);
+    color:var(--g7);
+  }
+  .page-label{
+    text-align:center;
+    font-size:12px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--g5);
+    padding:24px 0 8px;
+    background:var(--g1);
+  }
+  .screen{
+    max-width:1200px;
+    margin:0 auto 60px;
+    background:var(--g0);
+    border:1px solid var(--line);
+    outline:2px dashed var(--g4);
+    outline-offset:-6px;
+  }
+  .annot{
+    text-align:center;
+    font-size:11px;
+    color:var(--g5);
+    max-width:1200px;
+    margin:0 auto 6px;
+    font-style:italic;
+  }
+
+  /* generic placeholder box */
+  .box{
+    background:var(--g2);
+    border:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--g6);
+    font-size:12px;
+    text-align:center;
+  }
+  .box.solid{background:var(--g3);}
+  .box.dark{background:var(--g5); color:var(--g0);}
+  .box.line-only{
+    background:repeating-linear-gradient(45deg, var(--g2), var(--g2) 6px, var(--g1) 6px, var(--g1) 12px);
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    height:56px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    background:var(--g1);
+  }
+  .logo-box{width:140px;height:28px;}
+  .topbar-actions{display:flex; gap:10px;}
+  .pill{
+    height:28px;
+    padding:0 14px;
+    background:var(--g2);
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;color:var(--g6);
+  }
+
+  /* ---------- password gate ---------- */
+  .gate-wrap{
+    min-height:520px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:60px 20px;
+  }
+  .gate-card{
+    width:360px;
+    border:1px solid var(--line);
+    background:var(--g0);
+    padding:32px 28px;
+  }
+  .gate-icon{
+    width:56px;height:56px;
+    margin:0 auto 18px;
+    border-radius:50%;
+  }
+  .field-label{font-size:11px;color:var(--g6); margin-bottom:6px;}
+  .field{
+    height:40px;
+    background:var(--g1);
+    border:1px solid var(--line);
+    margin-bottom:18px;
+  }
+  .btn{
+    height:42px;
+    background:var(--g6);
+    color:var(--g0);
+    border:1px solid var(--g7);
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;
+    letter-spacing:0.5px;
+  }
+  .btn.secondary{
+    background:var(--g2);
+    color:var(--g6);
+    border:1px solid var(--line);
+  }
+  .center-text{text-align:center;}
+
+  /* ---------- main layout ---------- */
+  .app-body{
+    display:flex;
+    min-height:640px;
+  }
+  .sidebar{
+    width:220px;
+    border-right:1px solid var(--line);
+    background:var(--g1);
+    padding:20px 14px;
+    flex-shrink:0;
+  }
+  .sidebar-title{font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--g5); margin:18px 0 8px;}
+  .sidebar-item{
+    height:34px;
+    background:var(--g2);
+    border:1px solid var(--line);
+    margin-bottom:8px;
+    display:flex;align-items:center;
+    padding:0 10px;
+    font-size:11px;color:var(--g6);
+  }
+  .sidebar-item.active{background:var(--g5); color:var(--g0);}
+
+  .main{
+    flex:1;
+    padding:24px 28px;
+    min-width:0;
+  }
+
+  .page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .h1-box{width:260px;height:26px;}
+
+  .toolbar{
+    display:flex;
+    gap:10px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .search-box{
+    flex:1;
+    min-width:200px;
+    height:38px;
+    background:var(--g1);
+    border:1px solid var(--line);
+    display:flex;align-items:center;
+    padding:0 12px;
+    font-size:11px;color:var(--g5);
+  }
+  .filter-chip{
+    height:38px;
+    padding:0 16px;
+    background:var(--g2);
+    border:1px solid var(--line);
+    display:flex;align-items:center;
+    font-size:11px;color:var(--g6);
+  }
+  .btn-upload{
+    height:38px;
+    padding:0 18px;
+    background:var(--g6);
+    color:var(--g0);
+    border:1px solid var(--g7);
+    display:flex;align-items:center;
+    font-size:11px;
+  }
+
+  /* ---------- file table ---------- */
+  .table{
+    border:1px solid var(--line);
+  }
+  .t-head{
+    display:grid;
+    grid-template-columns: 2.4fr 1fr 1fr 0.8fr 1fr;
+    background:var(--g2);
+    border-bottom:1px solid var(--line);
+  }
+  .t-head div{
+    padding:10px 12px;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    color:var(--g6);
+  }
+  .t-row{
+    display:grid;
+    grid-template-columns: 2.4fr 1fr 1fr 0.8fr 1fr;
+    border-bottom:1px solid var(--g3);
+    align-items:center;
+  }
+  .t-row:nth-child(even){background:var(--g1);}
+  .t-row > div{
+    padding:14px 12px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .file-icon{width:26px;height:26px;flex-shrink:0;}
+  .file-name-lines{flex:1;}
+  .line-lg{height:11px; width:70%; background:var(--g4); margin-bottom:6px;}
+  .line-sm{height:8px; width:40%; background:var(--g3);}
+  .tag-box{height:20px;width:70px;background:var(--g3);}
+  .dl-btn{
+    height:30px;width:90%;
+    background:var(--g5);
+    color:var(--g0);
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;
+  }
+  .icon-btn{
+    width:26px;height:26px;
+    background:var(--g3);
+    border:1px solid var(--line);
+  }
+  .row-actions{display:flex; gap:6px; justify-content:flex-end;}
+
+  .pagination{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-top:18px;
+  }
+  .pg-box{width:30px;height:30px;background:var(--g2);border:1px solid var(--line);}
+  .pg-box.active{background:var(--g6);}
+
+  /* ---------- upload modal ---------- */
+  .modal-overlay{
+    background:rgba(0,0,0,0.15);
+    padding:40px 20px;
+    display:flex;
+    justify-content:center;
+  }
+  .modal{
+    width:520px;
+    background:var(--g0);
+    border:1px solid var(--g7);
+  }
+  .modal-header{
+    height:48px;
+    border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 18px;
+  }
+  .modal-body{padding:24px;}
+  .dropzone{
+    height:150px;
+    border:2px dashed var(--g4);
+    background:var(--g1);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:20px;
+  }
+  .dz-icon{width:40px;height:40px;}
+  .dz-text{font-size:11px;color:var(--g5);}
+  .form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-bottom:20px;
+  }
+  .form-grid .full{grid-column:1/-1;}
+  .modal-footer{
+    height:60px;
+    border-top:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:10px;
+    padding:0 18px;
+  }
+  .modal-footer .btn, .modal-footer .btn.secondary{width:110px;height:36px;}
+
+  /* ---------- delete confirm ---------- */
+  .confirm-box{
+    width:380px;
+    background:var(--g0);
+    border:1px solid var(--g7);
+    margin:40px auto;
+    padding:26px;
+  }
+  .confirm-icon{width:44px;height:44px;border-radius:50%;margin:0 auto 14px;}
+  .confirm-text-lines{margin-bottom:22px;}
+  .confirm-actions{display:flex; gap:10px;}
+  .confirm-actions > div{flex:1;height:38px;}
+
+  /* ---------- empty / mobile note ---------- */
+  .note{
+    max-width:1200px;
+    margin:0 auto 40px;
+    font-size:12px;
+    color:var(--g5);
+    text-align:center;
+    padding:0 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-label">Screen 1 — Password Gate</div>
+<div class="annot">Single shared-password check before file list is shown. Session persists via cookie.</div>
+<div class="screen">
+  <div class="topbar">
+    <div class="box logo-box">LOGO / APP NAME</div>
+  </div>
+  <div class="gate-wrap">
+    <div class="gate-card">
+      <div class="box dark gate-icon">LOCK</div>
+      <div class="box line-only" style="height:20px;width:60%;margin:0 auto 24px;">INSTALLER VAULT</div>
+      <div class="field-label">PASSWORD</div>
+      <div class="field"></div>
+      <div class="btn">UNLOCK →</div>
+      <div class="box line-only center-text" style="height:14px;width:80%;margin:16px auto 0;font-size:10px;">error state: incorrect password</div>
+    </div>
+  </div>
+</div>
+
+<div class="page-label">Screen 2 — File List (Main / Technician View)</div>
+<div class="annot">Browse, search, and download installers. Sidebar for categories, table with name/version/date/size/download.</div>
+<div class="screen">
+  <div class="topbar">
+    <div class="box logo-box">LOGO / APP NAME</div>
+    <div class="topbar-actions">
+      <div class="pill">ADMIN MODE TOGGLE</div>
+      <div class="pill">LOG OUT</div>
+    </div>
+  </div>
+  <div class="app-body">
+    <div class="sidebar">
+      <div class="box solid" style="height:34px;">+ ADD CATEGORY</div>
+      <div class="sidebar-title">Categories</div>
+      <div class="sidebar-item active">All Installers (24)</div>
+      <div class="sidebar-item">OS / Drivers</div>
+      <div class="sidebar-item">Productivity</div>
+      <div class="sidebar-item">Security / AV</div>
+      <div class="sidebar-item">Utilities</div>
+      <div class="sidebar-item">Uncategorized</div>
+      <div class="sidebar-title">Storage</div>
+      <div class="box line-only" style="height:60px;font-size:10px;">usage meter: 640MB / 1GB</div>
+    </div>
+    <div class="main">
+      <div class="page-header">
+        <div class="box h1-box">FILE LIST — ALL INSTALLERS</div>
+      </div>
+      <div class="toolbar">
+        <div class="search-box">🔍 Search installers by name…</div>
+        <div class="filter-chip">Category ▾</div>
+        <div class="filter-chip">Sort: Newest ▾</div>
+        <div class="btn-upload">＋ UPLOAD INSTALLER</div>
+      </div>
+
+      <div class="table">
+        <div class="t-head">
+          <div>Name</div>
+          <div>Category</div>
+          <div>Version / Date</div>
+          <div>Size</div>
+          <div>Action</div>
+        </div>
+
+        <div class="t-row">
+          <div><div class="box file-icon">EXE</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
+          <div><div class="tag-box"></div></div>
+          <div><div class="line-sm" style="width:80%;"></div></div>
+          <div><div class="line-sm" style="width:60%;"></div></div>
+          <div style="display:flex;gap:6px;"><div class="dl-btn">DOWNLOAD</div></div>
+        </div>
+
+        <div class="t-row">
+          <div><div class="box file-icon">MSI</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
+          <div><div class="tag-box"></div></div>
+          <div><div class="line-sm" style="width:80%;"></div></div>
+          <div><div class="line-sm" style="width:60%;"></div></div>
+          <div style="display:flex;gap:6px;"><div class="dl-btn">DOWNLOAD</div></div>
+        </div>
+
+        <div class="t-row">
+          <div><div class="box file-icon">DMG</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
+          <div><div class="tag-box"></div></div>
+          <div><div class="line-sm" style="width:80%;"></div></div>
+          <div><div class="line-sm" style="width:60%;"></div></div>
+          <div style="display:flex;gap:6px;"><div class="dl-btn">DOWNLOAD</div></div>
+        </div>
+
+        <div class="t-row">
+          <div><div class="box file-icon">ZIP</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
+          <div><div class="tag-box"></div></div>
+          <div><div class="line-sm" style="width:80%;"></div></div>
+          <div><div class="line-sm" style="width:60%;"></div></div>
+          <div style="display:flex;gap:6px;"><div class="dl-btn">DOWNLOAD</div></div>
+        </div>
+
+        <div class="t-row">
+          <div><div class="box file-icon">PKG</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
+          <div><div class="tag-box"></div></div>
+          <div><div class="line-sm" style="width:80%;"></div></div>
+          <div><div class="line-sm" style="width:60%;"></div></div>
+          <div style="display:flex;gap:6px;"><div class="dl-btn">DOWNLOAD</div></div>
+        </div>
+      </div>
+
+      <div class="pagination">
+        <div class="pg-box active"></div>
+        <div class="pg-box"></div>
+        <div class="pg-box"></div>
+        <div class="pg-box">…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-label">Screen 3 — File List (Admin Mode, with row actions)</div>
+<div class="annot">Same list, admin toggle reveals replace/delete controls per row.</div>
+<div class="screen">
+  <div class="topbar">
+    <div class="box logo-box">LOGO / APP NAME</div>
+    <div class="topbar-actions">
+      <div class="pill dark box">ADMIN MODE: ON</div>
+      <div class="pill">LOG OUT</div>
+    </div>
+  </div>
+  <div class="app-body">
+    <div class="sidebar">
+      <div class="box solid" style="height:34px;">+ ADD CATEGORY</div>
+      <div class="sidebar-title">Categories</div>
+      <div class="sidebar-item active">All Installers (24)</div>
+      <div class="sidebar-item">OS / Drivers</div>
+      <div class="sidebar-item">Productivity</div>
+      <div class="sidebar-item">Security / AV</div>
+      <div class="sidebar-item">Utilities</div>
+      <div class="sidebar-item">Uncategorized</div>
+    </div>
+    <div class="main">
+      <div class="page-header">
+        <div class="box h1-box">FILE LIST — ADMIN VIEW</div>
+      </div>
+      <div class="toolbar">
+        <div class="search-box">🔍 Search installers by name…</div>
+        <div class="filter-chip">Category ▾</div>
+        <div class="filter-chip">Sort: Newest ▾</div>
+        <div class="btn-upload">＋ UPLOAD INSTALLER</div>
+      </div>
+
+      <div class="table">
+        <div class="t-head">
+          <div>Name</div>
+          <div>Category</div>
+          <div>Version / Date</div>
+          <div>Size</div>
+          <div>Actions</div>
+        </div>
+
+        <div class="t-row">
+          <div><div class="box file-icon">EXE</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
+          <div><div class="tag-box"></div></div>
+          <div><div class="line-sm" style="width:80%;"></div></div>
+          <div><div class="line-sm" style="width:60%;"></div></div>
+          <div class="row-actions">
+            <div class="icon-btn" title="download">↓</div>
+            <div class="icon-btn" title="replace">⟳</div>
+            <div class="icon-btn" title="delete">✕</div>
+          </div>
+        </div>
+
+        <div class="t-row">
+          <div><div class="box file-icon">MSI</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
+          <div><div class="tag-box"></div></div>
+          <div><div class="line-sm" style="width:80%;"></div></div>
+          <div><div class="line-sm" style="width:60%;"></div></div>
+          <div class="row-actions">
+            <div class="icon-btn" title="download">↓</div>
+            <div class="icon-btn" title="replace">⟳</div>
+            <div class="icon-btn" title="delete">✕</div>
+          </div>
+        </div>
+
+        <div class="t-row">
+          <div><div class="box file-icon">DMG</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
+          <div><div class="tag-box"></div></div>
+          <div><div class="line-sm" style="width:80%;"></div></div>
+          <div><div class="line-sm" style="width:60%;"></div></div>
+          <div class="row-actions">
+            <div class="icon-btn" title="download">↓</div>
+            <div class="icon-btn" title="replace">⟳</div>
+            <div class="icon-btn" title="delete">✕</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-label">Screen 4 — Upload / Replace Modal</div>
+<div class="annot">Drag-and-drop or file picker. Duplicate filename triggers "replace" confirmation instead of a silent duplicate.</div>
+<div class="screen">
+  <div class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="box line-only" style="height:16px;width:180px;">UPLOAD NEW INSTALLER</div>
+        <div class="box" style="width:24px;height:24px;">✕</div>
+      </div>
+      <div class="modal-body">
+        <div class="dropzone">
+          <div class="box dz-icon">↑</div>
+          <div class="dz-text">Drag & drop a file here, or click to browse</div>
+          <div class="box line-only" style="height:12px;width:60%;font-size:9px;">.exe .msi .dmg .zip .pkg — up to 500MB</div>
+        </div>
+        <div class="form-grid">
+          <div>
+            <div class="field-label">DISPLAY NAME</div>
+            <div class="field"></div>
+          </div>
+          <div>
+            <div class="field-label">CATEGORY</div>
+            <div class="field"></div>
+          </div>
+          <div>
+            <div class="field-label">VERSION / DATE</div>
+            <div class="field"></div>
+          </div>
+          <div>
+            <div class="field-label">SIZE (AUTO)</div>
+            <div class="field box" style="font-size:10px;">auto-detected</div>
+          </div>
+          <div class="full">
+            <div class="field-label">NOTES (OPTIONAL)</div>
+            <div class="field" style="height:60px;"></div>
+          </div>
+        </div>
+        <div class="box line-only" style="height:36px;font-size:10px;">⚠ notice: a file named "example.exe" already exists — uploading will prompt to replace it</div>
+      </div>
+      <div class="modal-footer">
+        <div class="btn secondary">CANCEL</div>
+        <div class="btn">UPLOAD</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-label">Screen 5 — Delete Confirmation</div>
+<div class="annot">Explicit confirmation step before removing a file, per acceptance criteria.</div>
+<div class="screen">
+  <div class="confirm-box">
+    <div class="box dark confirm-icon">!</div>
+    <div class="box line-only center-text" style="height:16px;width:70%;margin:0 auto 12px;">DELETE THIS INSTALLER?</div>
+    <div class="confirm-text-lines">
+      <div class="line-sm" style="width:100%;margin:0 auto 6px;"></div>
+      <div class="line-sm" style="width:80%;margin:0 auto;"></div>
+    </div>
+    <div class="confirm-actions">
+      <div class="btn secondary">CANCEL</div>
+      <div class="btn dark">DELETE</div>
+    </div>
+  </div>
+</div>
+
+<div class="page-label">Screen 6 — Narrow / Laptop-Width Layout</div>
+<div class="annot">Responsive check: sidebar collapses, table becomes stacked cards on a narrower laptop window (no mobile requirement).</div>
+<div class="screen" style="max-width:680px;">
+  <div class="topbar">
+    <div class="box" style="width:26px;height:26px;">☰</div>
+    <div class="box logo-box" style="width:100px;">LOGO</div>
+    <div class="pill">LOG OUT</div>
+  </div>
+  <div class="main" style="padding:18px;">
+    <div class="toolbar" style="flex-direction:column;">
+      <div class="search-box" style="width:100%;">🔍 Search installers…</div>
+      <div style="display:flex;gap:10px;width:100%;">
+        <div class="filter-chip" style="flex:1;">Category ▾</div>
+        <div class="btn-upload" style="flex:1;justify-content:center;">＋ UPLOAD</div>
+      </div>
+    </div>
+
+    <div class="box" style="height:1px;background:var(--g3);margin:14px 0;"></div>
+
+    <div class="box" style="justify-content:flex-start;padding:14px;margin-bottom:10px;border:1px solid var(--line);">
+      <div class="file-icon box" style="margin-right:10px;">EXE</div>
+      <div style="flex:1;text-align:left;">
+        <div class="line-lg" style="width:60%;"></div>
+        <div class="line-sm" style="width:35%;"></div>
+      </div>
+      <div class="dl-btn" style="width:70px;">GET</div>
+    </div>
+    <div class="box" style="justify-content:flex-start;padding:14px;margin-bottom:10px;border:1px solid var(--line);">
+      <div class="file-icon box" style="margin-right:10px;">MSI</div>
+      <div style="flex:1;text-align:left;">
+        <div class="line-lg" style="width:60%;"></div>
+        <div class="line-sm" style="width:35%;"></div>
+      </div>
+      <div class="dl-btn" style="width:70px;">GET</div>
+    </div>
+  </div>
+</div>
+
+<div class="note">Wireframe playground — grayscale, medium-fidelity layout structure only. No brand colors, typography, or final copy applied. Based on prd.md (Installer Vault).</div>
+
+</body>
+</html>
