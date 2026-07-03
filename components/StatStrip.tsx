@@ -2,7 +2,6 @@ import type { InstallerFile } from "@/lib/types";
 import { categories } from "@/lib/mock-data";
 
 export function StatStrip({ files }: { files: InstallerFile[] }) {
-  const totalSize = files.length; // placeholder — real bytes once wired to storage
   return (
     <div className="stat-strip">
       <div className="stat-cell">
