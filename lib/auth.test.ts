@@ -9,6 +9,7 @@ vi.mock("next/headers", () => ({
 }));
 
 import { checkPassword, isAuthenticated, SESSION_COOKIE } from "./auth";
+import { createSessionToken } from "./session";
 
 describe("checkPassword", () => {
   const original = process.env.SITE_PASSWORD;
@@ -42,19 +43,60 @@ describe("checkPassword", () => {
 });
 
 describe("isAuthenticated", () => {
-  afterEach(() => cookieStore.clear());
+  const originalSecret = process.env.COOKIE_SECRET;
 
-  it("is true when the session cookie equals the expected value", () => {
+  beforeEach(() => {
+    process.env.COOKIE_SECRET = "unit-test-cookie-secret-0123456789";
+  });
+
+  afterEach(() => {
+    cookieStore.clear();
+    process.env.COOKIE_SECRET = originalSecret;
+  });
+
+  it("is true for a valid signed token", async () => {
+    cookieStore.set(SESSION_COOKIE, { value: await createSessionToken() });
+    expect(await isAuthenticated()).toBe(true);
+  });
+
+  it("is false when the cookie is absent", async () => {
+    expect(await isAuthenticated()).toBe(false);
+  });
+
+  it("rejects the legacy forgeable value \"1\" (SEC-1 regression)", async () => {
     cookieStore.set(SESSION_COOKIE, { value: "1" });
-    expect(isAuthenticated()).toBe(true);
+    expect(await isAuthenticated()).toBe(false);
   });
 
-  it("is false when the cookie is absent", () => {
-    expect(isAuthenticated()).toBe(false);
+  it("rejects a token with a tampered payload", async () => {
+    const token = await createSessionToken();
+    const [, sig] = token.split(".");
+    // Re-encode a different payload but keep the original signature.
+    const forged = `${Buffer.from(JSON.stringify({ sid: "x", exp: 9_999_999_999 }))
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "")}.${sig}`;
+    cookieStore.set(SESSION_COOKIE, { value: forged });
+    expect(await isAuthenticated()).toBe(false);
   });
 
-  it("is false when the cookie has an unexpected value", () => {
-    cookieStore.set(SESSION_COOKIE, { value: "0" });
-    expect(isAuthenticated()).toBe(false);
+  it("rejects an expired token", async () => {
+    cookieStore.set(SESSION_COOKIE, { value: await createSessionToken(-10) });
+    expect(await isAuthenticated()).toBe(false);
+  });
+
+  it("rejects a token signed with a different secret", async () => {
+    const token = await createSessionToken();
+    process.env.COOKIE_SECRET = "a-completely-different-secret-value";
+    cookieStore.set(SESSION_COOKIE, { value: token });
+    expect(await isAuthenticated()).toBe(false);
+  });
+
+  it("fails closed when COOKIE_SECRET is unset", async () => {
+    const token = await createSessionToken();
+    delete process.env.COOKIE_SECRET;
+    cookieStore.set(SESSION_COOKIE, { value: token });
+    expect(await isAuthenticated()).toBe(false);
   });
 });

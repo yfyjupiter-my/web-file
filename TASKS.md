@@ -23,10 +23,12 @@ Set up the safety net so later refactors can't silently regress.
 
 ---
 
-## Phase 1 — Critical security (block before any real files)
+## Phase 1 — Critical security (block before any real files) — ✅ DONE (2026-07-03)
 
-- [ ] **P1.1 — Replace the forgeable session cookie.** Cookie is currently the static string `"1"` with no signature — anyone setting `installer_vault_session=1` is fully authenticated. Implement a signed/encrypted token (HMAC-SHA256 over random session id + expiry using a server-only `COOKIE_SECRET`, or `iron-session`/JWT). Validate the signature server-side in both `middleware.ts` and `isAuthenticated()`. Add `COOKIE_SECRET` to env + `.env.example`. `[SEC-1]` **Critical**
-- [ ] **P1.2 — Rate-limit `/api/auth`.** Add per-IP/per-session throttling + exponential backoff + alerting on repeated failures (Upstash / Vercel KV). Single shared password is the only defense. `[SEC-2]` High
+- [x] **P1.1 — Replace the forgeable session cookie.** Signed tokens now live in `lib/session.ts`: `<payload>.<sig>` where payload is base64url `{ sid, exp }` and sig is HMAC-SHA256 over it, keyed by a server-only `COOKIE_SECRET`. `createSessionToken()`/`verifySessionToken()` use the **Web Crypto API** (`crypto.subtle`) so the identical code runs in both the Edge runtime (`middleware.ts`) and Node (`isAuthenticated()`, now async). Verify fails closed on tamper/expiry/wrong-secret/missing-secret. The legacy `"1"` value no longer authenticates (regression-tested). `COOKIE_SECRET` added to `.env.example` + `.env.local`. `[SEC-1]` **Critical**
+- [x] **P1.2 — Rate-limit `/api/auth`.** `lib/rate-limit.ts` throttles per client key (`x-forwarded-for` → `x-real-ip` → `unknown`): 5 free failures, then exponential backoff (1s doubling, capped 15 min), cleared on success. Structured `console.warn` alert past a threshold (never logs the password); idle-eviction + `MAX_KEYS` cap bound memory. **In-memory / per-instance** — documented swap path to Upstash / Vercel KV before horizontal scale-out. `[SEC-2]` High
+
+> ℹ️ Rate limiting is intentionally **in-memory** (no external infra added in Phase 1). It protects local/dev and single-instance deploys; the `check/record/success` surface is a drop-in for a KV-backed store when the app scales out.
 
 ---
 

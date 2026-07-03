@@ -8,7 +8,7 @@ import { mockFiles } from "@/lib/mock-data";
  * call once the `files` table exists (see prd.md §4).
  */
 export async function GET() {
-  if (!isAuthenticated()) {
+  if (!(await isAuthenticated())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   return NextResponse.json({ files: mockFiles });
@@ -20,7 +20,7 @@ export async function GET() {
  * upsert the metadata row (prd.md upload flow).
  */
 export async function POST(req: NextRequest) {
-  if (!isAuthenticated()) {
+  if (!(await isAuthenticated())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

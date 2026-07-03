@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
-import { SESSION_COOKIE } from "./session";
+import { SESSION_COOKIE, verifySessionToken } from "./session";
 
 /** Constant-time comparison to avoid timing attacks on the shared password (prd.md §4). */
 function timingSafeEqual(a: string, b: string) {
@@ -16,8 +16,8 @@ export function checkPassword(candidate: string): boolean {
   return timingSafeEqual(candidate, sitePassword);
 }
 
-export function isAuthenticated(): boolean {
-  return cookies().get(SESSION_COOKIE)?.value === "1";
+export async function isAuthenticated(): Promise<boolean> {
+  return verifySessionToken(cookies().get(SESSION_COOKIE)?.value);
 }
 
 export { SESSION_COOKIE };

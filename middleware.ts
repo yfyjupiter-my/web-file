@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SESSION_COOKIE } from "@/lib/session";
+import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 
-export function middleware(req: NextRequest) {
-  const authed = req.cookies.get(SESSION_COOKIE)?.value === "1";
+export async function middleware(req: NextRequest) {
+  const authed = await verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
   if (!authed) {
     return NextResponse.redirect(new URL("/", req.url));
   }
