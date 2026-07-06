@@ -6,12 +6,13 @@ interface Props {
 
 export function FileTable({ files }: Props) {
   return (
-    <table className="file-table">
+    <table className="file-table file-table--compact file-table--bordered">
       <thead>
         <tr>
           <th>Name</th>
           <th>Category</th>
-          <th>Version / Date</th>
+          <th>Version</th>
+          <th>Date</th>
           <th>Size</th>
           <th>Action</th>
         </tr>
@@ -28,9 +29,8 @@ export function FileTable({ files }: Props) {
             <td>
               <span className="tag-pill">{file.category}</span>
             </td>
-            <td>
-              {file.version} · {file.uploadedAt}
-            </td>
+            <td>{file.version}</td>
+            <td>{file.uploadedAt}</td>
             <td>{file.sizeLabel}</td>
             <td>
               <a
@@ -45,7 +45,7 @@ export function FileTable({ files }: Props) {
         ))}
         {files.length === 0 && (
           <tr>
-            <td colSpan={5} className="file-table-empty">
+            <td colSpan={6} className="file-table-empty">
               No installers match this filter.
             </td>
           </tr>

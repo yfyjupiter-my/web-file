@@ -542,6 +542,40 @@ body::before {
     color: var(--text-faint);
   }
 
+  /* Density modifier — tighter row height for scanning long lists */
+  .file-table--compact thead th {
+    padding: 6px 16px;
+  }
+  .file-table--compact tbody td {
+    padding: 7px 16px;
+    font-size: 12px;
+  }
+  .file-table--compact .file-type-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 9px;
+  }
+  .file-table--compact .file-name {
+    font-size: 13px;
+  }
+
+  /* Style modifier — full cell borders instead of row-only dividers */
+  .file-table--bordered {
+    border: 1px solid var(--border);
+  }
+  .file-table--bordered thead th,
+  .file-table--bordered tbody td {
+    border: 1px solid var(--border);
+  }
+  .file-table--bordered thead th:first-child,
+  .file-table--bordered tbody td:first-child {
+    border-left: none;
+  }
+  .file-table--bordered thead th:last-child,
+  .file-table--bordered tbody td:last-child {
+    border-right: none;
+  }
+
   .mini-list {
     padding: 20px 24px;
   }
