@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth, parseJsonBody, requireSameOrigin } from "@/lib/api-helpers";
 import { getFilesRepo } from "@/lib/files-repo";
+import { getCategoriesRepo } from "@/lib/categories-repo";
 import {
   validateUploadPayload,
   validateFilename,
@@ -66,7 +67,8 @@ export const POST = withAuth(async (req) => {
 
   const body = await parseJsonBody<Partial<UploadCommitPayload>>(req);
 
-  const result = validateUploadPayload(body);
+  const validCategories = await getCategoriesRepo().list();
+  const result = validateUploadPayload(body, validCategories);
   if (!result.ok) {
     return NextResponse.json<UploadResponse>(
       { ok: false, error: result.error },

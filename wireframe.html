@@ -85,6 +85,27 @@
     display:flex;align-items:center;justify-content:center;
     font-size:11px;color:var(--g6);
   }
+  .theme-toggle{
+    width:52px;
+    height:28px;
+    padding:2px;
+    background:var(--g2);
+    border:1px solid var(--line);
+    display:flex;
+    align-items:center;
+  }
+  .theme-toggle .knob{
+    width:22px;
+    height:22px;
+    background:var(--g6);
+    color:var(--g0);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+  }
+  .theme-toggle.is-dark{justify-content:flex-end;}
+  .theme-toggle .knob:hover{background:var(--g7); cursor:pointer;}
 
   /* ---------- password gate ---------- */
   .gate-wrap{
@@ -208,7 +229,7 @@
   }
   .t-head{
     display:grid;
-    grid-template-columns: 2.4fr 1fr 1fr 0.8fr 1fr;
+    grid-template-columns: 0.4fr 2.4fr 1fr 1fr 0.8fr 1fr;
     background:var(--g2);
     border-bottom:1px solid var(--line);
   }
@@ -221,10 +242,33 @@
   }
   .t-row{
     display:grid;
-    grid-template-columns: 2.4fr 1fr 1fr 0.8fr 1fr;
+    grid-template-columns: 0.4fr 2.4fr 1fr 1fr 0.8fr 1fr;
     border-bottom:1px solid var(--g3);
     align-items:center;
   }
+  .t-row.selected{background:var(--g2);}
+  .checkbox{
+    width:16px;height:16px;
+    border:1px solid var(--g5);
+    background:var(--g0);
+    flex-shrink:0;
+  }
+  .checkbox.checked{background:var(--g6); border-color:var(--g7);}
+  .checkbox.indeterminate{background:var(--g4); border-color:var(--g6);}
+  .bulk-bar{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    height:44px;
+    padding:0 14px;
+    background:var(--g5);
+    color:var(--g0);
+    font-size:11px;
+    margin-bottom:10px;
+  }
+  .bulk-bar.show{display:flex;}
+  .bulk-bar .row-actions{gap:8px;}
+  .bulk-bar .icon-btn{background:var(--g0); border-color:var(--g7);}
   .t-row:nth-child(even){background:var(--g1);}
   .t-row > div{
     padding:14px 12px;
@@ -355,12 +399,13 @@
 </div>
 
 <div class="page-label">Screen 2 — File List (Main / Technician View)</div>
-<div class="annot">Browse, search, and download installers. Sidebar for categories, table with name/version/date/size/download.</div>
+<div class="annot">Browse, search, and download installers. Row checkboxes + header "select all" enable multi-select; bulk action bar appears when rows are selected.</div>
 <div class="screen">
   <div class="topbar">
     <div class="box logo-box">LOGO / APP NAME</div>
     <div class="topbar-actions">
       <div class="pill">ADMIN MODE TOGGLE</div>
+      <div class="theme-toggle"><div class="knob">☀</div></div>
       <div class="pill">LOG OUT</div>
     </div>
   </div>
@@ -388,8 +433,18 @@
         <div class="btn-upload">＋ UPLOAD INSTALLER</div>
       </div>
 
+      <div class="bulk-bar show">
+        <div>2 SELECTED</div>
+        <div class="row-actions">
+          <div class="icon-btn box" style="width:auto;padding:0 12px;font-size:10px;">DOWNLOAD</div>
+          <div class="icon-btn box" style="width:auto;padding:0 12px;font-size:10px;">DELETE</div>
+          <div class="icon-btn box" style="width:auto;padding:0 12px;font-size:10px;">CLEAR</div>
+        </div>
+      </div>
+
       <div class="table">
         <div class="t-head">
+          <div><div class="checkbox indeterminate"></div></div>
           <div>Name</div>
           <div>Category</div>
           <div>Version / Date</div>
@@ -397,7 +452,8 @@
           <div>Action</div>
         </div>
 
-        <div class="t-row">
+        <div class="t-row selected">
+          <div><div class="checkbox checked"></div></div>
           <div><div class="box file-icon">EXE</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
           <div><div class="tag-box"></div></div>
           <div><div class="line-sm" style="width:80%;"></div></div>
@@ -405,7 +461,8 @@
           <div style="display:flex;gap:6px;"><div class="dl-btn">DOWNLOAD</div></div>
         </div>
 
-        <div class="t-row">
+        <div class="t-row selected">
+          <div><div class="checkbox checked"></div></div>
           <div><div class="box file-icon">MSI</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
           <div><div class="tag-box"></div></div>
           <div><div class="line-sm" style="width:80%;"></div></div>
@@ -414,6 +471,7 @@
         </div>
 
         <div class="t-row">
+          <div><div class="checkbox"></div></div>
           <div><div class="box file-icon">DMG</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
           <div><div class="tag-box"></div></div>
           <div><div class="line-sm" style="width:80%;"></div></div>
@@ -422,6 +480,7 @@
         </div>
 
         <div class="t-row">
+          <div><div class="checkbox"></div></div>
           <div><div class="box file-icon">ZIP</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
           <div><div class="tag-box"></div></div>
           <div><div class="line-sm" style="width:80%;"></div></div>
@@ -430,6 +489,7 @@
         </div>
 
         <div class="t-row">
+          <div><div class="checkbox"></div></div>
           <div><div class="box file-icon">PKG</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
           <div><div class="tag-box"></div></div>
           <div><div class="line-sm" style="width:80%;"></div></div>
@@ -449,12 +509,13 @@
 </div>
 
 <div class="page-label">Screen 3 — File List (Admin Mode, with row actions)</div>
-<div class="annot">Same list, admin toggle reveals replace/delete controls per row.</div>
+<div class="annot">Same list, admin toggle reveals replace/delete controls per row. Selection also enables bulk replace/delete via the bar above the table.</div>
 <div class="screen">
   <div class="topbar">
     <div class="box logo-box">LOGO / APP NAME</div>
     <div class="topbar-actions">
       <div class="pill dark box">ADMIN MODE: ON</div>
+      <div class="theme-toggle is-dark"><div class="knob">☾</div></div>
       <div class="pill">LOG OUT</div>
     </div>
   </div>
@@ -480,8 +541,18 @@
         <div class="btn-upload">＋ UPLOAD INSTALLER</div>
       </div>
 
+      <div class="bulk-bar show">
+        <div>1 SELECTED</div>
+        <div class="row-actions">
+          <div class="icon-btn box" style="width:auto;padding:0 12px;font-size:10px;">REPLACE</div>
+          <div class="icon-btn box" style="width:auto;padding:0 12px;font-size:10px;">DELETE</div>
+          <div class="icon-btn box" style="width:auto;padding:0 12px;font-size:10px;">CLEAR</div>
+        </div>
+      </div>
+
       <div class="table">
         <div class="t-head">
+          <div><div class="checkbox indeterminate"></div></div>
           <div>Name</div>
           <div>Category</div>
           <div>Version / Date</div>
@@ -489,7 +560,8 @@
           <div>Actions</div>
         </div>
 
-        <div class="t-row">
+        <div class="t-row selected">
+          <div><div class="checkbox checked"></div></div>
           <div><div class="box file-icon">EXE</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
           <div><div class="tag-box"></div></div>
           <div><div class="line-sm" style="width:80%;"></div></div>
@@ -502,6 +574,7 @@
         </div>
 
         <div class="t-row">
+          <div><div class="checkbox"></div></div>
           <div><div class="box file-icon">MSI</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
           <div><div class="tag-box"></div></div>
           <div><div class="line-sm" style="width:80%;"></div></div>
@@ -514,6 +587,7 @@
         </div>
 
         <div class="t-row">
+          <div><div class="checkbox"></div></div>
           <div><div class="box file-icon">DMG</div><div class="file-name-lines"><div class="line-lg"></div><div class="line-sm"></div></div></div>
           <div><div class="tag-box"></div></div>
           <div><div class="line-sm" style="width:80%;"></div></div>
@@ -599,7 +673,10 @@
   <div class="topbar">
     <div class="box" style="width:26px;height:26px;">☰</div>
     <div class="box logo-box" style="width:100px;">LOGO</div>
-    <div class="pill">LOG OUT</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div class="theme-toggle"><div class="knob">☀</div></div>
+      <div class="pill">LOG OUT</div>
+    </div>
   </div>
   <div class="main" style="padding:18px;">
     <div class="toolbar" style="flex-direction:column;">

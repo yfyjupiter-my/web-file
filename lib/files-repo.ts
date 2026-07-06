@@ -25,6 +25,8 @@ export interface FilesRepo {
   create(input: NewFileInput): Promise<InstallerFile>;
   /** The private-bucket object path for a file id, or null if unknown/mock. */
   getStorageKey(id: string): Promise<string | null>;
+  /** Delete a file's metadata row. No-op if the id doesn't exist. */
+  remove(id: string): Promise<void>;
 }
 
 /** Pagination window for `list()`. Omit `limit` to fetch everything. */
@@ -109,6 +111,10 @@ class MockFilesRepo implements FilesRepo {
   // Mock mode has no Storage backend; downloads aren't available.
   async getStorageKey(): Promise<string | null> {
     return null;
+  }
+
+  async remove(id: string): Promise<void> {
+    this.files = this.files.filter((f) => f.id !== id);
   }
 }
 
@@ -218,6 +224,12 @@ class SupabaseFilesRepo implements FilesRepo {
       .maybeSingle();
     if (error) throw new Error(`files.getStorageKey failed: ${error.message}`);
     return (data?.storage_key as string | undefined) ?? null;
+  }
+
+  async remove(id: string): Promise<void> {
+    const client = getSupabaseServerClient();
+    const { error } = await client.from("files").delete().eq("id", id);
+    if (error) throw new Error(`files.remove failed: ${error.message}`);
   }
 }
 

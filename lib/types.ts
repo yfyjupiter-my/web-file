@@ -1,11 +1,10 @@
 export type FileType = "EXE" | "MSI" | "DMG" | "ZIP" | "PKG";
 
-export type Category =
-  | "OS / Drivers"
-  | "Productivity"
-  | "Security / AV"
-  | "Utilities"
-  | "Uncategorized";
+/**
+ * Category names are a persisted, user-extensible list (see
+ * lib/categories-repo.ts) rather than a closed set, so this is just `string`.
+ */
+export type Category = string;
 
 export interface InstallerFile {
   id: string;
@@ -76,5 +75,29 @@ export interface UploadResponse {
   ok: boolean;
   conflict?: boolean;
   file?: InstallerFile;
+  error?: string;
+}
+
+/** Response from `DELETE /api/files/:id`. */
+export interface DeleteResponse {
+  ok: boolean;
+  error?: string;
+}
+
+/** Response from `GET /api/categories`. */
+export interface CategoriesListResponse {
+  categories: string[];
+}
+
+/** Body for `POST /api/categories`. */
+export interface CreateCategoryPayload {
+  name: string;
+}
+
+/** Response from `POST /api/categories`. */
+export interface CreateCategoryResponse {
+  ok: boolean;
+  category?: string;
+  conflict?: boolean;
   error?: string;
 }

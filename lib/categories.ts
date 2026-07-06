@@ -1,21 +1,15 @@
 import type { Category } from "./types";
 
 /**
- * Permanent domain taxonomy. Unlike lib/mock-data.ts (deletable fixtures),
- * this is real product data — the category vocabulary the app is built around.
+ * The category taxonomy is a persisted, user-extensible list (see
+ * lib/categories-repo.ts) rather than a hardcoded array — this module only
+ * holds the shared `Tab` type and the validation guard.
  */
-export const categories: Category[] = [
-  "OS / Drivers",
-  "Productivity",
-  "Security / AV",
-  "Utilities",
-  "Uncategorized",
-];
 
-/** Runtime guard for validating untrusted `category` values (e.g. upload input). */
-export function isCategory(value: unknown): value is Category {
-  return typeof value === "string" && (categories as string[]).includes(value);
+/** Runtime guard for validating an untrusted `category` value against the current list. */
+export function isCategory(value: unknown, validCategories: string[]): value is Category {
+  return typeof value === "string" && validCategories.includes(value);
 }
 
-/** Dashboard tab type: "All" plus every category, derived from the taxonomy. */
+/** Dashboard tab type: "All" plus every category. */
 export type Tab = "All" | Category;

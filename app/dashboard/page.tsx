@@ -1,4 +1,5 @@
 import { getFilesRepo } from "@/lib/files-repo";
+import { getCategoriesRepo } from "@/lib/categories-repo";
 import { TopNav } from "@/components/TopNav";
 import { StatStrip } from "@/components/StatStrip";
 import { DashboardControls } from "./DashboardControls";
@@ -13,14 +14,17 @@ export const dynamic = "force-dynamic";
  * imported into the client bundle.
  */
 export default async function DashboardPage() {
-  const { files } = await getFilesRepo().list();
+  const [{ files }, categories] = await Promise.all([
+    getFilesRepo().list(),
+    getCategoriesRepo().list(),
+  ]);
 
   return (
     <main className="page-wrap page-wrap--full">
       <div className="screen screen--full screen--scroll">
         <TopNav />
-        <StatStrip files={files} />
-        <DashboardControls initialFiles={files} />
+        <StatStrip files={files} categoriesCount={categories.length} />
+        <DashboardControls initialFiles={files} initialCategories={categories} />
       </div>
     </main>
   );

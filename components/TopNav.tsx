@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function TopNav() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export function TopNav() {
         Installer Vault
       </div>
       <div className="topnav-right">
+        <ThemeToggle />
         <button type="button" className="pill pill-btn" onClick={handleLogout}>
           Log Out
         </button>

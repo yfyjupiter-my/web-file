@@ -9,6 +9,11 @@ export const UPLOAD_LIMITS = {
   notesMax: 500,
 } as const;
 
+/** Field limits for a new category name. */
+export const CATEGORY_LIMITS = {
+  nameMax: 40,
+} as const;
+
 /**
  * Max upload size. The hard backstop is the Supabase project's *global* Storage
  * limit (50MB on the free tier); raise both together when moving to a paid plan
@@ -84,7 +89,25 @@ export function validateName(
   return { ok: true, value: name };
 }
 
-export function validateUploadPayload(body: Partial<UploadPayload> | null): ValidationResult {
+/** Validate/normalize a new category name (same charset rule as a display name). */
+export function validateCategoryName(
+  raw: unknown
+): { ok: true; value: string } | { ok: false; error: string } {
+  const name = String(raw ?? "").trim();
+  if (!name) return { ok: false, error: "Category name is required." };
+  if (name.length > CATEGORY_LIMITS.nameMax) {
+    return { ok: false, error: `Category name must be ${CATEGORY_LIMITS.nameMax} characters or fewer.` };
+  }
+  if (!NAME_RE.test(name)) {
+    return { ok: false, error: "Category name contains unsupported characters." };
+  }
+  return { ok: true, value: name };
+}
+
+export function validateUploadPayload(
+  body: Partial<UploadPayload> | null,
+  validCategories: string[]
+): ValidationResult {
   if (!body || typeof body !== "object") {
     return { ok: false, error: "Missing request body." };
   }
@@ -94,7 +117,7 @@ export function validateUploadPayload(body: Partial<UploadPayload> | null): Vali
   const name = nameCheck.value;
 
   const category = String(body.category ?? "");
-  if (!isCategory(category)) {
+  if (!isCategory(category, validCategories)) {
     return { ok: false, error: "Invalid category." };
   }
 

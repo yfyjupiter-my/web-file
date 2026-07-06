@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { categories } from "@/lib/categories";
 import {
   ALLOWED_EXTENSIONS,
   MAX_UPLOAD_BYTES,
@@ -15,6 +14,7 @@ import type {
 } from "@/lib/types";
 
 interface Props {
+  categories: string[];
   onClose: () => void;
   onConflict: (name: string) => void;
   onSaved: () => void;
@@ -22,7 +22,7 @@ interface Props {
 
 const ACCEPT = [".exe", ".msi", ".dmg", ".zip", ".pkg"];
 
-export function UploadModal({ onClose, onConflict, onSaved }: Props) {
+export function UploadModal({ categories, onClose, onConflict, onSaved }: Props) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [version, setVersion] = useState("");

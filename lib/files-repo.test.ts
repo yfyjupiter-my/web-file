@@ -66,4 +66,14 @@ describe("MockFilesRepo (via getFilesRepo)", () => {
     expect(files[0].name).toBe("New Tool");
     expect(await repo.findByName("new tool")).not.toBeNull();
   });
+
+  it("remove deletes the file and is a no-op for an unknown id", async () => {
+    const created = await repo.create({ name: "Disposable", category: "Utilities", version: "v1" });
+    expect(await repo.findByName("Disposable")).not.toBeNull();
+
+    await repo.remove(created.id);
+    expect(await repo.findByName("Disposable")).toBeNull();
+
+    await expect(repo.remove("does-not-exist")).resolves.toBeUndefined();
+  });
 });

@@ -1,16 +1,28 @@
-import { categories, type Tab } from "@/lib/categories";
+import type { Tab } from "@/lib/categories";
 import type { InstallerFile } from "@/lib/types";
 
 interface Props {
   files: InstallerFile[];
+  categories: string[];
   activeTab: Tab;
   onSelect: (tab: Tab) => void;
+  onAddCategory: () => void;
 }
 
-export function Sidebar({ files, activeTab, onSelect }: Props) {
+export function Sidebar({ files, categories, activeTab, onSelect, onAddCategory }: Props) {
   return (
     <nav className="sidebar" aria-label="Filter by category">
-      <div className="sidebar-title">Categories</div>
+      <div className="sidebar-title-row">
+        <div className="sidebar-title">Categories</div>
+        <button
+          type="button"
+          className="sidebar-add"
+          onClick={onAddCategory}
+          aria-label="Add category"
+        >
+          ＋
+        </button>
+      </div>
       <button
         type="button"
         className={`sidebar-item ${activeTab === "All" ? "active" : ""}`}

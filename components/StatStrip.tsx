@@ -1,12 +1,12 @@
 import type { InstallerFile } from "@/lib/types";
-import { categories } from "@/lib/categories";
 import { computeFileStats } from "@/lib/stats";
 
 interface Props {
   files: InstallerFile[];
+  categoriesCount: number;
 }
 
-export function StatStrip({ files }: Props) {
+export function StatStrip({ files, categoriesCount }: Props) {
   const stats = computeFileStats(files);
 
   return (
@@ -24,7 +24,7 @@ export function StatStrip({ files }: Props) {
         <div className="stat-label">File formats</div>
       </div>
       <div className="stat-cell">
-        <div className="stat-num">{categories.length}</div>
+        <div className="stat-num">{categoriesCount}</div>
         <div className="stat-label">Categories</div>
       </div>
     </div>

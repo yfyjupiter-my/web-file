@@ -3,7 +3,10 @@
  * CSS custom-property blocks in globals.css. A named constant (rather than a
  * bare string literal) keeps the value typed and greppable (CODE-25).
  */
-export const THEMES = ["sunset"] as const;
+export const THEMES = ["sunset", "dark"] as const;
 export type Theme = (typeof THEMES)[number];
 
 export const ACTIVE_THEME: Theme = "sunset";
+
+/** localStorage key the client-side toggle reads/writes to persist the chosen theme. */
+export const THEME_STORAGE_KEY = "installer-vault-theme";
