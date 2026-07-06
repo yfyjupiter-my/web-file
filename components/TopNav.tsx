@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 
 export function TopNav() {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -61,6 +63,17 @@ export function TopNav() {
                 type="button"
                 className="account-dropdown-item"
                 role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setChangePasswordOpen(true);
+                }}
+              >
+                Change Password
+              </button>
+              <button
+                type="button"
+                className="account-dropdown-item"
+                role="menuitem"
                 onClick={handleLogout}
               >
                 Log Out
@@ -69,6 +82,7 @@ export function TopNav() {
           )}
         </div>
       </div>
+      {changePasswordOpen && <ChangePasswordModal onClose={() => setChangePasswordOpen(false)} />}
     </div>
   );
 }

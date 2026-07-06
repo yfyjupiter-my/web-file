@@ -414,6 +414,9 @@ body::before {
     background: var(--accent-soft);
     color: var(--accent);
   }
+  .account-dropdown-item + .account-dropdown-item {
+    margin-top: 2px;
+  }
 
   /* Theme toggle (light/dark switch, top nav) */
   .theme-toggle {

@@ -27,6 +27,18 @@ export interface AuthResponse {
   error?: string;
 }
 
+/** Body for `POST /api/auth/change-password`. */
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+/** Response from `POST /api/auth/change-password`. */
+export interface ChangePasswordResponse {
+  ok: boolean;
+  error?: string;
+}
+
 /** Client-supplied metadata body for `POST /api/files`. All fields untrusted. */
 export interface UploadPayload {
   name: string;

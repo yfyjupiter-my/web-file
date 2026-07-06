@@ -8,7 +8,7 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
-import { checkPassword, isAuthenticated } from "./auth";
+import { checkPassword, isAuthenticated, setSitePassword } from "./auth";
 import { createSessionToken, SESSION_COOKIE } from "./session";
 
 describe("checkPassword", () => {
@@ -22,23 +22,29 @@ describe("checkPassword", () => {
     process.env.SITE_PASSWORD = original;
   });
 
-  it("accepts the correct password", () => {
-    expect(checkPassword("s3cret")).toBe(true);
+  it("accepts the correct password", async () => {
+    expect(await checkPassword("s3cret")).toBe(true);
   });
 
-  it("rejects an incorrect password", () => {
-    expect(checkPassword("wrong")).toBe(false);
+  it("rejects an incorrect password", async () => {
+    expect(await checkPassword("wrong")).toBe(false);
   });
 
-  it("rejects a password of different length (no length oracle)", () => {
-    expect(checkPassword("s3cre")).toBe(false);
-    expect(checkPassword("s3cret-extra")).toBe(false);
+  it("rejects a password of different length (no length oracle)", async () => {
+    expect(await checkPassword("s3cre")).toBe(false);
+    expect(await checkPassword("s3cret-extra")).toBe(false);
   });
 
-  it("rejects everything when SITE_PASSWORD is unset", () => {
+  it("rejects everything when SITE_PASSWORD is unset", async () => {
     delete process.env.SITE_PASSWORD;
-    expect(checkPassword("s3cret")).toBe(false);
-    expect(checkPassword("")).toBe(false);
+    expect(await checkPassword("s3cret")).toBe(false);
+    expect(await checkPassword("")).toBe(false);
+  });
+
+  it("a persisted override (setSitePassword) supersedes SITE_PASSWORD", async () => {
+    await setSitePassword("n3wpass");
+    expect(await checkPassword("n3wpass")).toBe(true);
+    expect(await checkPassword("s3cret")).toBe(false);
   });
 });
 
