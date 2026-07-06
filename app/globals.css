@@ -152,6 +152,19 @@ body::before {
     align-items: center;
     gap: 6px;
   }
+  .pill-btn {
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .pill-btn:hover {
+    background: var(--accent-grad);
+    color: var(--on-accent);
+  }
+  .pill-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 
   /* 5.3 Icon Chip */
   .chip-icon {
@@ -349,44 +362,59 @@ body::before {
     margin-top: 4px;
   }
 
-  /* 5.6 Tabs */
-  .tabs-row {
+  /* Sidebar (category nav, replaces the old top tab-bar) */
+  .app-body {
     display: flex;
-    gap: 6px;
-    padding: 16px 24px 0;
-    border-bottom: 1px solid var(--border);
-    flex-wrap: wrap;
+    align-items: stretch;
     background: var(--surface-solid);
   }
-  .tab {
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    padding: 20px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sidebar-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-faint);
+    margin: 6px 4px 6px;
+  }
+  .sidebar-item {
     height: 38px;
-    padding: 0 18px;
-    border-radius: 10px 10px 0 0;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     font-size: 13px;
     color: var(--text-dim);
     cursor: pointer;
     font-weight: 500;
-    border-bottom: 2px solid transparent;
     background: none;
-    border-left: none;
-    border-right: none;
-    border-top: none;
+    border: none;
+    text-align: left;
     font-family: inherit;
   }
-  .tab:hover {
+  .sidebar-item:hover {
+    background: var(--accent-soft);
     color: var(--text);
   }
-  .tab:focus-visible,
-  .view-toggle > button:focus-visible {
+  .sidebar-item:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: -2px;
   }
-  .tab.active {
-    color: var(--accent);
+  .sidebar-item.active {
+    background: var(--accent-grad);
+    color: var(--on-accent);
     font-weight: 700;
-    border-bottom: 2px solid var(--accent);
+  }
+  .main {
+    flex: 1;
+    min-width: 0;
   }
 
   .toolbar-2 {
@@ -422,154 +450,91 @@ body::before {
     color: var(--text);
   }
 
-  /* 5.7 Segmented / View Toggle */
-  .view-toggle {
-    display: flex;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-  }
-  .view-toggle > button {
-    width: 40px;
-    height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--text-faint);
-    background: var(--surface-2);
-    border: none;
-    font-family: inherit;
-    font-size: inherit;
-  }
-  .view-toggle > button.active {
-    background: var(--accent);
-    color: var(--on-accent);
-  }
-
-  /* 5.5 File Card */
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
-    padding: 0 24px 30px;
+  /* File table (replaces the old card grid) */
+  .file-table {
+    width: 100%;
+    border-collapse: collapse;
     background: var(--surface-solid);
   }
-  .card-grid.list-view {
-    grid-template-columns: 1fr;
-  }
-  .file-card {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    background: var(--surface);
-    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s;
-  }
-  .file-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow);
-    border-color: var(--border-strong);
-    /* P4.10 — hint the compositor only while hovering (the sole transform
-       trigger); kept off the base rule so we don't promote every card to its
-       own layer at rest. */
-    will-change: transform;
-  }
-  .card-thumb {
-    height: 92px;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--surface-2), var(--surface));
-    border-bottom: 1px solid var(--border);
-  }
-  .card-thumb .type {
-    font-size: 15px;
-    font-weight: 800;
-    letter-spacing: 1px;
-    color: var(--accent);
-  }
-  .card-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
+  .file-table thead th {
+    text-align: left;
+    padding: 10px 24px;
     font-size: 10px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-  .card-body {
-    padding: 14px 16px;
-  }
-  .card-title {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-  .card-meta {
-    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     color: var(--text-dim);
-    display: flex;
-    justify-content: space-between;
-  }
-  .card-footer {
-    display: flex;
+    border-bottom: 1px solid var(--border);
     border-top: 1px solid var(--border);
   }
-  .card-footer > button,
-  .card-footer > a {
-    flex: 1;
-    height: 40px;
+  .file-table tbody td {
+    padding: 14px 24px;
+    font-size: 13px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+  }
+  .file-table tbody tr:hover {
+    background: var(--accent-soft);
+  }
+  .file-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .file-type-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 9px;
+    background: var(--accent-grad);
+    color: var(--on-accent);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    color: var(--text-dim);
-    background: none;
-    border: none;
-    font-family: inherit;
-    text-decoration: none;
   }
-  .card-footer > button:hover,
-  .card-footer > a:hover {
+  .file-name {
+    font-size: 14px;
+    font-weight: 600;
     color: var(--text);
   }
-  .card-footer > button:focus-visible,
-  .card-footer > a:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
+  .tag-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    white-space: nowrap;
   }
-  .card-footer .dl {
+  .row-download {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: var(--radius-sm);
     background: var(--accent-soft);
     color: var(--accent);
-    border-right: 1px solid var(--border);
-  }
-  .card-notes {
-    margin-top: 8px;
     font-size: 12px;
-    color: var(--text-dim);
-    line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .row-download:hover {
+    background: var(--accent-grad);
+    color: var(--on-accent);
+  }
+  .row-download:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .file-table-empty {
+    text-align: center;
+    padding: 40px 24px;
+    color: var(--text-faint);
   }
 
-  /* Screen 3 — drawer over dimmed list */
-  .with-drawer {
-    display: flex;
-    position: relative;
-    background: var(--surface-solid);
-  }
-  .dashboard-dim {
-    flex: 1;
-    opacity: 0.45;
-    pointer-events: none;
-  }
   .mini-list {
     padding: 20px 24px;
   }
@@ -609,18 +574,31 @@ body::before {
     background: var(--accent-soft);
   }
 
-  /* 5.10 Drawer */
-  .drawer {
-    width: 410px;
-    flex-shrink: 0;
-    background: var(--surface-solid);
-    border-left: 1px solid var(--border-strong);
+  /* 5.10 Upload modal (centered overlay, replaces the old side drawer) */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(58, 43, 38, 0.35);
+  }
+  .modal {
+    width: 520px;
+    max-width: 100%;
+    max-height: calc(100vh - 48px);
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
-    box-shadow: -24px 0 50px -30px rgba(0, 0, 0, 0.35);
   }
-  .drawer-header {
+  .modal-header {
     height: 60px;
+    flex-shrink: 0;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
@@ -628,7 +606,7 @@ body::before {
     padding: 0 22px;
     font-weight: 700;
   }
-  .drawer-header .x {
+  .modal-header .x {
     width: 30px;
     height: 30px;
     border-radius: 8px;
@@ -640,14 +618,30 @@ body::before {
     color: var(--text-dim);
     border: none;
   }
-  .drawer-body {
+  .modal-body {
     padding: 22px;
     flex: 1;
     overflow: auto;
   }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .modal-footer {
+    border-top: 1px solid var(--border);
+    padding: 18px 22px;
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .modal-footer .btn {
+    flex: 1;
+    height: 44px;
+  }
 
   /* 5.11 Dropzone */
-  .drawer-dropzone {
+  .modal-dropzone {
     height: 130px;
     border: 2px dashed var(--border-strong);
     border-radius: var(--radius);
@@ -660,7 +654,7 @@ body::before {
     margin-bottom: 20px;
     cursor: pointer;
   }
-  .drawer-dropzone .up {
+  .modal-dropzone .up {
     width: 44px;
     height: 44px;
     border-radius: 12px;
@@ -671,24 +665,27 @@ body::before {
     color: #fff;
     font-size: 20px;
   }
-  .drawer-dropzone small {
+  .modal-dropzone small {
     font-size: 12px;
     color: var(--text-dim);
   }
-  .drawer-dropzone.drag-over {
+  .modal-dropzone.drag-over {
     border-color: var(--accent);
     background: var(--accent-soft);
   }
-  .drawer-dropzone:focus-visible {
+  .modal-dropzone:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 
   /* 5.12 Labeled field */
-  .drawer-field {
-    margin-bottom: 16px;
+  .modal-field {
+    margin-bottom: 0;
   }
-  .drawer-field label {
+  .modal-field.full {
+    grid-column: 1 / -1;
+  }
+  .modal-field label {
     display: block;
     font-size: 11px;
     text-transform: uppercase;
@@ -697,7 +694,7 @@ body::before {
     margin-bottom: 7px;
     font-weight: 600;
   }
-  .drawer-input {
+  .modal-input {
     width: 100%;
     height: 42px;
     border-radius: var(--radius-sm);
@@ -709,24 +706,14 @@ body::before {
     color: var(--text);
     outline: none;
   }
-  .drawer-input:focus {
+  .modal-input:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
   }
-  textarea.drawer-input {
+  textarea.modal-input {
     height: 70px;
     padding-top: 11px;
     resize: none;
-  }
-  .drawer-footer {
-    border-top: 1px solid var(--border);
-    padding: 18px 22px;
-    display: flex;
-    gap: 12px;
-  }
-  .drawer-footer .btn {
-    flex: 1;
-    height: 44px;
   }
 
   .dashboard-loading {
@@ -736,8 +723,8 @@ body::before {
     font-size: 14px;
     background: var(--surface-solid);
   }
-  .drawer-error {
-    margin: 0 20px 8px;
+  .modal-error {
+    margin: 0 22px 12px;
   }
 
   /* 5.13 Toast / Alert */
@@ -937,16 +924,24 @@ body::before {
   .stat-strip {
     grid-template-columns: repeat(2, 1fr);
   }
-  .card-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .with-drawer {
+  .app-body {
     flex-direction: column;
   }
-  .drawer {
+  .sidebar {
     width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
   }
-  .dashboard-dim {
+  .sidebar-title {
     display: none;
+  }
+  .file-table {
+    display: block;
+    overflow-x: auto;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }

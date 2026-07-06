@@ -3,23 +3,24 @@
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { categories, type Tab } from "@/lib/categories";
+import type { Tab } from "@/lib/categories";
 import type { InstallerFile } from "@/lib/types";
-import { FileCard } from "@/components/FileCard";
+import { Sidebar } from "@/components/Sidebar";
+import { FileTable } from "@/components/FileTable";
 import { ConflictToast } from "@/components/ConflictToast";
 
-// P4.5 — the drawer chunk is only needed once the user opens it, so load it
-// lazily. `ssr: false` keeps it out of the server-rendered HTML (it's a purely
-// interactive, initially-hidden panel).
-const UploadDrawer = dynamic(
-  () => import("@/components/UploadDrawer").then((m) => m.UploadDrawer),
+// P4.5 — the upload modal chunk is only needed once the user opens it, so
+// load it lazily. `ssr: false` keeps it out of the server-rendered HTML (it's
+// a purely interactive, initially-hidden overlay).
+const UploadModal = dynamic(
+  () => import("@/components/UploadModal").then((m) => m.UploadModal),
   { ssr: false }
 );
 
 /**
  * Client island for the dashboard: owns only the interactive state (tab,
- * search, view, drawer, conflict). Initial file data is fetched server-side
- * and passed in, so the file list and filtering logic don't bloat the bundle
+ * search, modal, conflict). Initial file data is fetched server-side and
+ * passed in, so the file list and filtering logic don't bloat the bundle
  * beyond what interactivity requires.
  */
 export function DashboardControls({
@@ -31,8 +32,7 @@ export function DashboardControls({
   const [activeTab, setActiveTab] = useState<Tab>("All");
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [view, setView] = useState<"grid" | "list">("grid");
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [conflictName, setConflictName] = useState<string | null>(null);
 
   // P4.3 (frontend half) — debounce the search input so filtering doesn't run
@@ -52,92 +52,40 @@ export function DashboardControls({
     });
   }, [initialFiles, activeTab, debouncedQuery]);
 
-  // P4.4 — one `card-grid` instance, always at the same position in the tree.
-  // The drawer-open state only toggles a wrapper/dim class, so opening the
-  // drawer no longer unmounts and remounts every FileCard (which memoization
-  // in FileCard then keeps cheap on unrelated re-renders).
-  const grid = (
-    <div className={`card-grid ${view === "list" ? "list-view" : ""}`}>
-      {files.map((f) => (
-        <FileCard key={f.id} file={f} />
-      ))}
-    </div>
-  );
-
   return (
     <>
-      <div className="tabs-row" role="tablist" aria-label="Filter by category">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "All"}
-          className={`tab ${activeTab === "All" ? "active" : ""}`}
-          onClick={() => setActiveTab("All")}
-        >
-          All ({initialFiles.length})
-        </button>
-        {categories.map((c) => (
-          <button
-            key={c}
-            type="button"
-            role="tab"
-            aria-selected={activeTab === c}
-            className={`tab ${activeTab === c ? "active" : ""}`}
-            onClick={() => setActiveTab(c)}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
+      <div className="app-body">
+        <Sidebar files={initialFiles} activeTab={activeTab} onSelect={setActiveTab} />
+        <div className="main">
+          <div className="toolbar-2">
+            <label className="search-inline">
+              🔍{" "}
+              <input
+                placeholder="Search installers…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </label>
+            <button className="btn btn-upload" onClick={() => setModalOpen(true)}>
+              ＋ Upload Installer
+            </button>
+          </div>
 
-      <div className="toolbar-2">
-        <label className="search-inline">
-          🔍{" "}
-          <input
-            placeholder="Search installers…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </label>
-        <div className="view-toggle" role="group" aria-label="View mode">
-          <button
-            type="button"
-            aria-label="Grid view"
-            aria-pressed={view === "grid"}
-            className={view === "grid" ? "active" : ""}
-            onClick={() => setView("grid")}
-          >
-            ▦
-          </button>
-          <button
-            type="button"
-            aria-label="List view"
-            aria-pressed={view === "list"}
-            className={view === "list" ? "active" : ""}
-            onClick={() => setView("list")}
-          >
-            ☰
-          </button>
+          <FileTable files={files} />
         </div>
-        <button className="btn btn-upload" onClick={() => setDrawerOpen(true)}>
-          ＋ Upload Installer
-        </button>
       </div>
 
-      <div className={drawerOpen ? "with-drawer" : undefined}>
-        <div className={drawerOpen ? "dashboard-dim" : undefined}>{grid}</div>
-        {drawerOpen && (
-          <UploadDrawer
-            onClose={() => setDrawerOpen(false)}
-            onConflict={(name) => setConflictName(name)}
-            onSaved={() => {
-              setDrawerOpen(false);
-              // Pull the just-persisted file from the server so it appears in the grid.
-              router.refresh();
-            }}
-          />
-        )}
-      </div>
+      {modalOpen && (
+        <UploadModal
+          onClose={() => setModalOpen(false)}
+          onConflict={(name) => setConflictName(name)}
+          onSaved={() => {
+            setModalOpen(false);
+            // Pull the just-persisted file from the server so it appears in the table.
+            router.refresh();
+          }}
+        />
+      )}
 
       {conflictName && (
         <ConflictToast
@@ -145,7 +93,7 @@ export function DashboardControls({
           onKeepBoth={() => setConflictName(null)}
           onReplace={() => {
             setConflictName(null);
-            setDrawerOpen(false);
+            setModalOpen(false);
           }}
         />
       )}

@@ -22,7 +22,7 @@ interface Props {
 
 const ACCEPT = [".exe", ".msi", ".dmg", ".zip", ".pkg"];
 
-export function UploadDrawer({ onClose, onConflict, onSaved }: Props) {
+export function UploadModal({ onClose, onConflict, onSaved }: Props) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [version, setVersion] = useState("");
@@ -126,100 +126,104 @@ export function UploadDrawer({ onClose, onConflict, onSaved }: Props) {
   }
 
   return (
-    <div className="drawer">
-      <div className="drawer-header">
-        Upload Installer
-        <button className="x" onClick={onClose} aria-label="Close">
-          ✕
-        </button>
-      </div>
-      <div className="drawer-body">
-        <div
-          className={`drawer-dropzone ${dragOver ? "drag-over" : ""}`}
-          role="button"
-          tabIndex={0}
-          aria-label="Choose a file to upload"
-          onClick={() => inputRef.current?.click()}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
+    <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="Upload installer">
+      <div className="modal">
+        <div className="modal-header">
+          Upload Installer
+          <button className="x" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
+        </div>
+        <div className="modal-body">
+          <div
+            className={`modal-dropzone ${dragOver ? "drag-over" : ""}`}
+            role="button"
+            tabIndex={0}
+            aria-label="Choose a file to upload"
+            onClick={() => inputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                inputRef.current?.click();
+              }
+            }}
+            onDragOver={(e) => {
               e.preventDefault();
-              inputRef.current?.click();
-            }
-          }}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            onFilePicked(e.dataTransfer.files?.[0] ?? null);
-          }}
-        >
-          <div className="up">↑</div>
-          {file ? (
-            <small>
-              {file.name} · {formatBytes(file.size)}
-            </small>
-          ) : (
-            <small>Drag file here or click to browse</small>
-          )}
-          <input
-            ref={inputRef}
-            type="file"
-            accept={ACCEPT.join(",")}
-            hidden
-            onChange={(e) => onFilePicked(e.target.files?.[0] ?? null)}
-          />
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              onFilePicked(e.dataTransfer.files?.[0] ?? null);
+            }}
+          >
+            <div className="up">↑</div>
+            {file ? (
+              <small>
+                {file.name} · {formatBytes(file.size)}
+              </small>
+            ) : (
+              <small>Drag file here or click to browse</small>
+            )}
+            <input
+              ref={inputRef}
+              type="file"
+              accept={ACCEPT.join(",")}
+              hidden
+              onChange={(e) => onFilePicked(e.target.files?.[0] ?? null)}
+            />
+          </div>
+          <div className="form-grid">
+            <div className="modal-field">
+              <label>Display Name</label>
+              <input
+                className="modal-input"
+                placeholder="e.g. Setup Wizard 2.4"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div className="modal-field">
+              <label>Category</label>
+              <select className="modal-input" value={category} onChange={(e) => setCategory(e.target.value)}>
+                <option value="">Select category…</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="modal-field">
+              <label>Version / Date</label>
+              <input
+                className="modal-input"
+                placeholder="v2.4 · Jun 28, 2026"
+                value={version}
+                onChange={(e) => setVersion(e.target.value)}
+              />
+            </div>
+            <div className="modal-field full">
+              <label>Notes</label>
+              <textarea
+                className="modal-input"
+                placeholder="Optional release notes…"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
-        <div className="drawer-field">
-          <label>Display Name</label>
-          <input
-            className="drawer-input"
-            placeholder="e.g. Setup Wizard 2.4"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+        {error && <div className="error-text modal-error">{error}</div>}
+        <div className="modal-footer">
+          <button className="btn ghost" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="btn" onClick={handleSave} disabled={saving || !name || !file || !category}>
+            {saving ? "Uploading…" : "Save File"}
+          </button>
         </div>
-        <div className="drawer-field">
-          <label>Category</label>
-          <select className="drawer-input" value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="">Select category…</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="drawer-field">
-          <label>Version / Date</label>
-          <input
-            className="drawer-input"
-            placeholder="v2.4 · Jun 28, 2026"
-            value={version}
-            onChange={(e) => setVersion(e.target.value)}
-          />
-        </div>
-        <div className="drawer-field">
-          <label>Notes</label>
-          <textarea
-            className="drawer-input"
-            placeholder="Optional release notes…"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-        </div>
-      </div>
-      {error && <div className="error-text drawer-error">{error}</div>}
-      <div className="drawer-footer">
-        <button className="btn ghost" onClick={onClose}>
-          Cancel
-        </button>
-        <button className="btn" onClick={handleSave} disabled={saving || !name || !file || !category}>
-          {saving ? "Uploading…" : "Save File"}
-        </button>
       </div>
     </div>
   );
