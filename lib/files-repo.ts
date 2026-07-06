@@ -37,12 +37,10 @@ export interface NewFileInput {
  */
 class MockFilesRepo implements FilesRepo {
   private files: InstallerFile[];
-  private nextId: number;
 
   constructor(seed: InstallerFile[]) {
     // Copy the seed so we never mutate the exported fixture array.
     this.files = seed.map((f) => ({ ...f }));
-    this.nextId = seed.length + 1;
   }
 
   async list(): Promise<InstallerFile[]> {
@@ -57,7 +55,9 @@ class MockFilesRepo implements FilesRepo {
 
   async create(input: NewFileInput): Promise<InstallerFile> {
     const file: InstallerFile = {
-      id: String(this.nextId++),
+      // Server-generated UUID. Any future storage key derives from this, never
+      // from the user-supplied name — prevents path traversal (SEC-6/P3.1).
+      id: crypto.randomUUID(),
       name: input.name,
       // Demo storage doesn't inspect the binary, so type/size are placeholders.
       type: "EXE",

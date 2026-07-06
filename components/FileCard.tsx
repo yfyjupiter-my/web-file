@@ -1,6 +1,11 @@
+import { memo } from "react";
 import type { InstallerFile } from "@/lib/types";
 
-export function FileCard({ file }: { file: InstallerFile }) {
+// P4.6 — memoized so that re-renders driven by unrelated dashboard state
+// (drawer open/close, view toggle, search) skip cards whose `file` prop is
+// referentially unchanged. The file objects come straight from the
+// server-fetched `initialFiles`, so their identity is stable across renders.
+function FileCardBase({ file }: { file: InstallerFile }) {
   return (
     <div className="file-card">
       <div className="card-thumb">
@@ -21,3 +26,5 @@ export function FileCard({ file }: { file: InstallerFile }) {
     </div>
   );
 }
+
+export const FileCard = memo(FileCardBase);

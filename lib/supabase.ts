@@ -1,5 +1,10 @@
 import "server-only";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+// P4.8 — memoize at module scope so we reuse one client across invocations
+// within a warm server process instead of paying `createClient` (and its
+// connection setup) on every request. A cold start naturally resets it.
+let client: SupabaseClient | undefined;
 
 /**
  * NOT WIRED UP YET.
@@ -23,7 +28,8 @@ export function getSupabaseServerClient() {
     );
   }
 
-  return createClient(url, serviceRoleKey, {
+  client ??= createClient(url, serviceRoleKey, {
     auth: { persistSession: false },
   });
+  return client;
 }

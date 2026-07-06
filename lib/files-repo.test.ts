@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 // The repo module seeds itself from mock-data at import time; mock the fixtures
 // so tests don't depend on the real seed contents.

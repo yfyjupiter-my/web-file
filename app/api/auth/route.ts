@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkPassword } from "@/lib/auth";
 import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, createSessionToken } from "@/lib/session";
 import { checkRateLimit, recordFailure, recordSuccess } from "@/lib/rate-limit";
+import { requireSameOrigin } from "@/lib/api-helpers";
 import type { AuthResponse } from "@/lib/types";
 
 /** Best-effort client identifier for throttling. Falls back to a shared bucket. */
@@ -12,6 +13,10 @@ function clientKey(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  // CSRF defense-in-depth (SEC-4) — reject positively cross-origin logins.
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const key = clientKey(req);
 
   const limit = checkRateLimit(key);

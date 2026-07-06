@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { withAuth, parseJsonBody } from "@/lib/api-helpers";
+import { withAuth, parseJsonBody, requireSameOrigin } from "@/lib/api-helpers";
 import { getFilesRepo } from "@/lib/files-repo";
-import { isCategory } from "@/lib/categories";
+import { validateUploadPayload } from "@/lib/validation";
 import type {
   FilesListResponse,
   UploadPayload,
@@ -22,29 +22,29 @@ export const GET = withAuth(async () => {
  * subsequent GET (the grid). Storage of the actual binary is still stubbed.
  */
 export const POST = withAuth(async (req) => {
+  // CSRF defense-in-depth on top of the SameSite=Lax session cookie (SEC-4).
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const body = await parseJsonBody<Partial<UploadPayload>>(req);
 
-  const name = String(body?.name ?? "").trim();
-  const category = String(body?.category ?? "");
-  const version = String(body?.version ?? "").trim();
-  const notes = body?.notes ? String(body.notes) : undefined;
-
-  if (!name || !isCategory(category)) {
+  const result = validateUploadPayload(body);
+  if (!result.ok) {
     return NextResponse.json<UploadResponse>(
-      { ok: false, error: "Invalid name or category." },
+      { ok: false, error: result.error },
       { status: 400 }
     );
   }
 
   const repo = getFilesRepo();
 
-  if (await repo.findByName(name)) {
+  if (await repo.findByName(result.value.name)) {
     return NextResponse.json<UploadResponse>(
       { ok: false, conflict: true },
       { status: 409 }
     );
   }
 
-  const file = await repo.create({ name, category, version, notes });
+  const file = await repo.create(result.value);
   return NextResponse.json<UploadResponse>({ ok: true, file });
 });

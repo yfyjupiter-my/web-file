@@ -42,11 +42,22 @@ body {
 }
 body {
   font-family: var(--font);
-  background: var(--page-bg);
-  background-attachment: fixed;
+  background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   transition: background 0.4s ease, color 0.3s ease;
+}
+/* P4.10 — the sunset gradient lives on a fixed, painted-once pseudo-element
+   instead of `background-attachment: fixed` on <body>. The latter forces the
+   browser to repaint the full-viewport background on every scroll frame; a
+   fixed-position layer is composited and stays cheap on long lists. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--page-bg);
+  pointer-events: none;
 }
 
 /* ============================================================
@@ -450,6 +461,10 @@ body {
     transform: translateY(-4px);
     box-shadow: var(--shadow);
     border-color: var(--border-strong);
+    /* P4.10 — hint the compositor only while hovering (the sole transform
+       trigger); kept off the base rule so we don't promote every card to its
+       own layer at rest. */
+    will-change: transform;
   }
   .card-thumb {
     height: 92px;

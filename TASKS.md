@@ -50,31 +50,39 @@ Fix the seam before Supabase is wired in.
 
 ---
 
-## Phase 3 — Security hardening
+## Phase 3 — Security hardening — ✅ DONE (2026-07-06)
 
-- [ ] **P3.1 — Server-side upload validation.** Validate `category` against the `Category` union; restrict `name`/`version` charset + max length; cap `notes`; derive storage keys from a generated UUID, never user-supplied `name` (prevents future path traversal). `[SEC-6]` `[CODE-40]` Medium
-- [ ] **P3.2 — Security headers.** Add `headers()` in `next.config.js` (or middleware): `X-Frame-Options: DENY`, `Content-Security-Policy: frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`. `[SEC-5]` Medium
-- [ ] **P3.3 — CSRF defense-in-depth.** Validate `Origin` / `Sec-Fetch-Site` on all mutating routes (in addition to SameSite=Lax). `[SEC-4]` Medium
-- [ ] **P3.4 — Harden example env.** Change `SITE_PASSWORD=changeme` → `REPLACE_ME_BEFORE_DEPLOY`; add a boot-time check that warns/refuses if the placeholder is still set. `[SEC-3]` Medium
-- [ ] **P3.5 — Remove raw-body logging.** Drop / gate `console.log("[stub] would upload installer:", body)` behind a debug flag; never log unredacted `notes`. `[SEC-7]` `[RUN-9]` Low
-- [ ] **P3.6 — Document/enforce Supabase RLS.** Add RLS policies on the `files` table as defense-in-depth for when the service-role key path is wired up. `[SEC-8]` Low
+- [x] **P3.1 — Server-side upload validation.** New `lib/validation.ts` (`validateUploadPayload`): required trimmed `name` ≤80 chars with a conservative charset (no path separators/control chars), `category` via `isCategory`, `version` ≤40 chars restricted charset, `notes` capped at 500. `POST /api/files` now validates before persisting. Repo assigns a server-generated `crypto.randomUUID()` id — any future storage key derives from that, never the user `name` (path-traversal defense). Covered by `lib/validation.test.ts`. `[SEC-6]` `[CODE-40]` Medium
+- [x] **P3.2 — Security headers.** `next.config.js` `headers()` applies to `/:path*`: `X-Frame-Options: DENY`, `Content-Security-Policy: frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`. (Full script/style CSP deferred until asset origins are known.) `[SEC-5]` Medium
+- [x] **P3.3 — CSRF defense-in-depth.** `requireSameOrigin()` in `lib/api-helpers.ts` blocks positively cross-origin requests via `Sec-Fetch-Site` (with `Origin`/`Host` fallback); applied to both `POST /api/auth` and `POST /api/files`, on top of SameSite=Lax. Non-browser clients (no signals) still pass and stay gated by auth. Covered by `lib/api-helpers.test.ts`. `[SEC-4]` Medium
+- [x] **P3.4 — Harden example env.** `.env.example` → `SITE_PASSWORD=REPLACE_ME_BEFORE_DEPLOY`. New `instrumentation.ts` boot check (enabled via `experimental.instrumentationHook`) **throws in production** and **warns in dev** if `SITE_PASSWORD`/`COOKIE_SECRET` are unset/placeholder/too-short. Belt-and-suspenders: `checkPassword` rejects placeholder values so a misconfigured deploy can't be unlocked with a default. `[SEC-3]` Medium
+- [x] **P3.5 — Remove raw-body logging.** Already removed in the Phase 2 route rewrite; verified no unredacted `body`/`notes` logging remains anywhere. Only remaining `console` calls are the boot warning and the password-free rate-limit alert. `[SEC-7]` `[RUN-9]` Low
+- [x] **P3.6 — Document/enforce Supabase RLS.** `docs/adr/0001-supabase-rls.md`: enable RLS + default-deny on `files`, service-role bypass for the server, private storage bucket + signed URLs, UUID-derived `storage_key`, and a `lower(name)` unique index (pairs with P4.1). `[SEC-8]` Low
 
 ---
 
-## Phase 4 — Performance & scale prep
+## Phase 4 — Performance & scale prep — 🟡 PARTIAL (2026-07-06)
 
 Most are "correct at current 8-item scale" — do them as/just before Supabase and larger datasets land.
+The **frontend-only** tasks that stand alone from the data source are done now; the rest are
+**gated on the real Supabase integration** and land with it (see per-task notes).
 
-- [ ] **P4.1 — Replace fetch-then-scan conflict check.** When wiring Supabase, use an indexed query (`select id from files where lower(name)=lower($1) limit 1`); never pull the whole table to check a name. `[RUN-8]` High
-- [ ] **P4.2 — Paginate `GET /api/files` + cache headers.** Add `limit`/`offset`/cursor and `Cache-Control`/`stale-while-revalidate`. `[RUN-7]` Medium
-- [ ] **P4.3 — Server-side search + debounce.** Debounce the search input 150–250ms; push filtering server-side (Supabase `ilike` + pagination). `[RUN-3]` Medium
-- [ ] **P4.4 — Single `card-grid`, conditional dim class.** Stop duplicating the grid JSX across drawer-open/closed branches (currently forces full unmount/remount of every `FileCard`). `[RUN-4]` `[CODE-47]` Medium
-- [ ] **P4.5 — Code-split `UploadDrawer`.** `next/dynamic` import so the drawer chunk loads only when opened. `[RUN-6]` Low
-- [ ] **P4.6 — Memoize + split page state.** Wrap `FileCard`/`TopNav`/`StatStrip` in `React.memo`; split page-level state so unrelated components don't re-render. `[RUN-5]` Low-Medium
-- [ ] **P4.7 — Virtualize the grid.** Add `react-window`/`react-virtual` once file counts exceed ~50–100. `[RUN-4]` Low
-- [ ] **P4.8 — Supabase client singleton.** Memoize at module scope (`client ??= createClient(...)`) respecting cold-start. `[RUN-10]` Low
-- [ ] **P4.9 — Revisit `next.config.js` output/caching.** Consider `output: 'standalone'` + image config once Storage assets/thumbnails exist. `[RUN-11]` `[CODE-102]` Low
-- [ ] **P4.10 — CSS scroll cost.** If long lists make scroll janky, replace `background-attachment: fixed` with a positioned pseudo-element; add scoped `will-change: transform` on `.file-card:hover`. `[RUN-12]` `[RUN-13]` Low
+- [ ] **P4.1 — Replace fetch-then-scan conflict check.** _Deferred — Supabase-gated._ Still runs through `repo.findByName()` (linear scan over the in-memory fixtures). When wiring Supabase, back it with an indexed query (`select id from files where lower(name)=lower($1) limit 1`); never pull the whole table to check a name. The `FilesRepo.findByName` seam already isolates this to the repo impl. `[RUN-8]` High
+- [ ] **P4.2 — Paginate `GET /api/files` + cache headers.** _Deferred — Supabase-gated._ Meaningless against the per-process mock (whole set is 8 rows, `force-dynamic`); add `limit`/`offset`/cursor and `Cache-Control`/`stale-while-revalidate` alongside the indexed table. `[RUN-7]` Medium
+- [x] **P4.3 — Server-side search + debounce.** _Frontend half done._ Search input is now debounced 200ms in `DashboardControls` (separate `debouncedQuery` state driving the `useMemo` filter), so filtering no longer runs per-keystroke. The debounced value is the drop-in trigger for a server-side `ilike`+pagination fetch when Supabase lands (that server-side push stays with P4.2). `[RUN-3]` Medium
+- [x] **P4.4 — Single `card-grid`, conditional dim class.** One `card-grid` instance now lives at a fixed tree position; drawer open/close only toggles the `with-drawer`/`dashboard-dim` wrapper classes instead of re-parenting the grid. Opening the drawer no longer unmounts/remounts every `FileCard`. `[RUN-4]` `[CODE-47]` Medium
+- [x] **P4.5 — Code-split `UploadDrawer`.** `next/dynamic(… , { ssr: false })` in `DashboardControls` — the drawer is a separate lazy chunk fetched only when opened, kept out of the server-rendered HTML. `[RUN-6]` Low
+- [x] **P4.6 — Memoize + split page state.** `FileCard` wrapped in `React.memo` (stable `file` identity from server-fetched `initialFiles`), so drawer/view/search re-renders skip unchanged cards. Debounced search (P4.3) is the state-split that keeps typing cheap. _Note:_ `TopNav`/`StatStrip` became **Server Components** in P2.4 — they render once server-side and never re-render on the client, so `React.memo` (a client-render optimization) doesn't apply; the original audit predates that conversion. `[RUN-5]` Low-Medium
+- [ ] **P4.7 — Virtualize the grid.** _Deferred — premature._ At 8 items (and until file counts exceed ~50–100) virtualization adds complexity for no gain. Revisit with real datasets; add `react-window`/`react-virtual` then. `[RUN-4]` Low
+- [x] **P4.8 — Supabase client singleton.** `lib/supabase.ts` now memoizes at module scope (`client ??= createClient(...)`), reusing one client across invocations in a warm process; a cold start resets it. `[RUN-10]` Low
+- [ ] **P4.9 — Revisit `next.config.js` output/caching.** _Deferred — Supabase-gated._ `output: 'standalone'` + image config only pays off once Storage assets/thumbnails exist. `[RUN-11]` `[CODE-102]` Low
+- [x] **P4.10 — CSS scroll cost.** Moved the sunset gradient off `body { background-attachment: fixed }` onto a fixed, painted-once `body::before` layer (composited, no per-frame full-viewport repaint on scroll); added scoped `will-change: transform` to `.file-card:hover` only (not the base rule, so cards aren't all promoted to layers at rest). `[RUN-12]` `[RUN-13]` Low
+
+> ℹ️ Phase 4 remaining work (**P4.1, P4.2, P4.7, P4.9**) is intentionally held until the real
+> Supabase integration / larger datasets land — each is a no-op or actively wrong against the
+> in-memory mock repo. The `FilesRepo` seam (P2.1) is the drop-in point for the indexed/paginated
+> queries. Verified green: `typecheck` · `lint` · 33 tests · `build` (dashboard route 2.37 kB with
+> the drawer split into its own chunk).
 
 ---
 

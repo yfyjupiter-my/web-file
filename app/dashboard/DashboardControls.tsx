@@ -1,12 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { categories, type Tab } from "@/lib/categories";
 import type { InstallerFile } from "@/lib/types";
 import { FileCard } from "@/components/FileCard";
-import { UploadDrawer } from "@/components/UploadDrawer";
 import { ConflictToast } from "@/components/ConflictToast";
+
+// P4.5 — the drawer chunk is only needed once the user opens it, so load it
+// lazily. `ssr: false` keeps it out of the server-rendered HTML (it's a purely
+// interactive, initially-hidden panel).
+const UploadDrawer = dynamic(
+  () => import("@/components/UploadDrawer").then((m) => m.UploadDrawer),
+  { ssr: false }
+);
 
 /**
  * Client island for the dashboard: owns only the interactive state (tab,
@@ -22,18 +30,32 @@ export function DashboardControls({
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("All");
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [conflictName, setConflictName] = useState<string | null>(null);
 
+  // P4.3 (frontend half) — debounce the search input so filtering doesn't run
+  // on every keystroke. When search moves server-side (Supabase `ilike`), this
+  // same debounced value becomes the fetch trigger.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 200);
+    return () => clearTimeout(t);
+  }, [query]);
+
   const files = useMemo(() => {
+    const needle = debouncedQuery.toLowerCase();
     return initialFiles.filter((f) => {
       const matchesTab = activeTab === "All" || f.category === activeTab;
-      const matchesQuery = f.name.toLowerCase().includes(query.toLowerCase());
+      const matchesQuery = f.name.toLowerCase().includes(needle);
       return matchesTab && matchesQuery;
     });
-  }, [initialFiles, activeTab, query]);
+  }, [initialFiles, activeTab, debouncedQuery]);
 
+  // P4.4 — one `card-grid` instance, always at the same position in the tree.
+  // The drawer-open state only toggles a wrapper/dim class, so opening the
+  // drawer no longer unmounts and remounts every FileCard (which memoization
+  // in FileCard then keeps cheap on unrelated re-renders).
   const grid = (
     <div className={`card-grid ${view === "list" ? "list-view" : ""}`}>
       {files.map((f) => (
@@ -84,9 +106,9 @@ export function DashboardControls({
         </button>
       </div>
 
-      {drawerOpen ? (
-        <div className="with-drawer">
-          <div className="dashboard-dim">{grid}</div>
+      <div className={drawerOpen ? "with-drawer" : undefined}>
+        <div className={drawerOpen ? "dashboard-dim" : undefined}>{grid}</div>
+        {drawerOpen && (
           <UploadDrawer
             onClose={() => setDrawerOpen(false)}
             onConflict={(name) => setConflictName(name)}
@@ -96,10 +118,8 @@ export function DashboardControls({
               router.refresh();
             }}
           />
-        </div>
-      ) : (
-        grid
-      )}
+        )}
+      </div>
 
       {conflictName && (
         <ConflictToast

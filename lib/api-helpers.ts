@@ -25,3 +25,37 @@ export async function parseJsonBody<T = unknown>(
 ): Promise<T | null> {
   return req.json().catch(() => null) as Promise<T | null>;
 }
+
+/**
+ * CSRF defense-in-depth (SEC-4). Returns a 403 response when the request is
+ * *positively* cross-origin, or null when it's same-origin or indeterminate.
+ *
+ * Layered on top of the SameSite=Lax session cookie: we use `Sec-Fetch-Site`
+ * when the browser sends it, and fall back to comparing the `Origin` host with
+ * the request `Host`. Non-browser clients (no `Sec-Fetch-Site`, no `Origin`)
+ * can't be classified as cross-origin, so they pass this layer and remain
+ * gated by auth + SameSite.
+ */
+export function requireSameOrigin(req: NextRequest): NextResponse | null {
+  const forbidden = () =>
+    NextResponse.json({ error: "Cross-origin request rejected." }, { status: 403 });
+
+  const secFetchSite = req.headers.get("sec-fetch-site");
+  if (secFetchSite) {
+    // "same-origin"/"same-site" are trusted; "none" = direct navigation (no POST
+    // body from another site); "cross-site" is the CSRF case we block.
+    return secFetchSite === "cross-site" ? forbidden() : null;
+  }
+
+  const origin = req.headers.get("origin");
+  if (origin) {
+    try {
+      const host = req.headers.get("host");
+      return new URL(origin).host === host ? null : forbidden();
+    } catch {
+      return forbidden();
+    }
+  }
+
+  return null;
+}
