@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
  * imported into the client bundle.
  */
 export default async function DashboardPage() {
-  const files = await getFilesRepo().list();
+  const { files } = await getFilesRepo().list();
 
   return (
     <main className="page-wrap">

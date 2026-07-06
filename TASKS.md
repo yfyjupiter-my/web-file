@@ -61,28 +61,32 @@ Fix the seam before Supabase is wired in.
 
 ---
 
-## Phase 4 — Performance & scale prep — 🟡 PARTIAL (2026-07-06)
+## Phase 4 — Performance & scale prep — 🟢 DONE except P4.7 (2026-07-06)
 
-Most are "correct at current 8-item scale" — do them as/just before Supabase and larger datasets land.
-The **frontend-only** tasks that stand alone from the data source are done now; the rest are
-**gated on the real Supabase integration** and land with it (see per-task notes).
+Most were "correct at current 8-item scale" — done as/just before Supabase and larger datasets land.
+The frontend-only tasks landed earlier; the **Supabase-gated** tasks (P4.1/P4.2/P4.9) now land
+**with the real integration** (`SupabaseFilesRepo`, see below). Only P4.7 (virtualization) stays
+deferred as genuinely premature at this scale.
 
-- [ ] **P4.1 — Replace fetch-then-scan conflict check.** _Deferred — Supabase-gated._ Still runs through `repo.findByName()` (linear scan over the in-memory fixtures). When wiring Supabase, back it with an indexed query (`select id from files where lower(name)=lower($1) limit 1`); never pull the whole table to check a name. The `FilesRepo.findByName` seam already isolates this to the repo impl. `[RUN-8]` High
-- [ ] **P4.2 — Paginate `GET /api/files` + cache headers.** _Deferred — Supabase-gated._ Meaningless against the per-process mock (whole set is 8 rows, `force-dynamic`); add `limit`/`offset`/cursor and `Cache-Control`/`stale-while-revalidate` alongside the indexed table. `[RUN-7]` Medium
+- [x] **P4.1 — Replace fetch-then-scan conflict check.** _Done with Supabase._ `SupabaseFilesRepo.findByName()` is now an **indexed exact match** — `select … where name_lower = $1 limit 1` against the unique index `files_name_lower_uniq` on a stored `name_lower = lower(name)` generated column (PostgREST can't filter a functional `lower(name)` index directly). No full-table scan. Verified live: a differently-cased duplicate (`"smoke test tool"` vs `"Smoke Test Tool"`) returns 409. `[RUN-8]` High
+- [x] **P4.2 — Paginate `GET /api/files` + cache headers.** _Done._ `GET /api/files?limit=&offset=` returns a newest-first page (indexed by `files_uploaded_at_idx`) plus the unpaginated `total` (Supabase `count: 'exact'`); `limit` capped at 100. Response carries `Cache-Control: private, max-age=10, stale-while-revalidate=30`. `FilesRepo.list()` now returns `{ files, total }`. Verified live (total=2, `limit=1&offset=0` returns the newest row). `[RUN-7]` Medium
 - [x] **P4.3 — Server-side search + debounce.** _Frontend half done._ Search input is now debounced 200ms in `DashboardControls` (separate `debouncedQuery` state driving the `useMemo` filter), so filtering no longer runs per-keystroke. The debounced value is the drop-in trigger for a server-side `ilike`+pagination fetch when Supabase lands (that server-side push stays with P4.2). `[RUN-3]` Medium
 - [x] **P4.4 — Single `card-grid`, conditional dim class.** One `card-grid` instance now lives at a fixed tree position; drawer open/close only toggles the `with-drawer`/`dashboard-dim` wrapper classes instead of re-parenting the grid. Opening the drawer no longer unmounts/remounts every `FileCard`. `[RUN-4]` `[CODE-47]` Medium
 - [x] **P4.5 — Code-split `UploadDrawer`.** `next/dynamic(… , { ssr: false })` in `DashboardControls` — the drawer is a separate lazy chunk fetched only when opened, kept out of the server-rendered HTML. `[RUN-6]` Low
 - [x] **P4.6 — Memoize + split page state.** `FileCard` wrapped in `React.memo` (stable `file` identity from server-fetched `initialFiles`), so drawer/view/search re-renders skip unchanged cards. Debounced search (P4.3) is the state-split that keeps typing cheap. _Note:_ `TopNav`/`StatStrip` became **Server Components** in P2.4 — they render once server-side and never re-render on the client, so `React.memo` (a client-render optimization) doesn't apply; the original audit predates that conversion. `[RUN-5]` Low-Medium
 - [ ] **P4.7 — Virtualize the grid.** _Deferred — premature._ At 8 items (and until file counts exceed ~50–100) virtualization adds complexity for no gain. Revisit with real datasets; add `react-window`/`react-virtual` then. `[RUN-4]` Low
 - [x] **P4.8 — Supabase client singleton.** `lib/supabase.ts` now memoizes at module scope (`client ??= createClient(...)`), reusing one client across invocations in a warm process; a cold start resets it. `[RUN-10]` Low
-- [ ] **P4.9 — Revisit `next.config.js` output/caching.** _Deferred — Supabase-gated._ `output: 'standalone'` + image config only pays off once Storage assets/thumbnails exist. `[RUN-11]` `[CODE-102]` Low
+- [x] **P4.9 — Revisit `next.config.js` output/caching.** _Done with Supabase._ Added `output: 'standalone'` (self-contained server bundle for container/serverless deploys; deploy via `node .next/standalone/server.js`) and `images.remotePatterns` scoped to the Supabase Storage host (`/storage/v1/object/**`), derived from `SUPABASE_URL`, ready for signed thumbnail URLs. `[RUN-11]` `[CODE-102]` Low
 - [x] **P4.10 — CSS scroll cost.** Moved the sunset gradient off `body { background-attachment: fixed }` onto a fixed, painted-once `body::before` layer (composited, no per-frame full-viewport repaint on scroll); added scoped `will-change: transform` to `.file-card:hover` only (not the base rule, so cards aren't all promoted to layers at rest). `[RUN-12]` `[RUN-13]` Low
 
-> ℹ️ Phase 4 remaining work (**P4.1, P4.2, P4.7, P4.9**) is intentionally held until the real
-> Supabase integration / larger datasets land — each is a no-op or actively wrong against the
-> in-memory mock repo. The `FilesRepo` seam (P2.1) is the drop-in point for the indexed/paginated
-> queries. Verified green: `typecheck` · `lint` · 33 tests · `build` (dashboard route 2.37 kB with
-> the drawer split into its own chunk).
+> ✅ Supabase is now wired in. `getFilesRepo()` returns `SupabaseFilesRepo` when
+> `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` are set, else the in-memory mock — no caller
+> changes (the P2.1 seam paid off). Schema/RLS live in `supabase/migrations/0001_files.sql`
+> (applied via `npm run migrate`, per ADR 0001: RLS on, default-deny, service-role bypass).
+> **P4.1/P4.2/P4.9 landed against it; only P4.7 (grid virtualization) stays deferred** as premature
+> below ~50–100 items. Verified green: `typecheck` · `lint` (0 warnings) · **38 tests** · `build`
+> (dashboard route 2.48 kB) — plus a **live end-to-end smoke test** (auth → create → paginated
+> list → 409 conflict) against the real Supabase project, with the test rows cleaned up afterward.
 
 ---
 

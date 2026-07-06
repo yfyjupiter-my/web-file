@@ -9,13 +9,40 @@ import type {
 } from "@/lib/types";
 
 /**
- * Backed by the mock FilesRepo (lib/files-repo.ts) until Supabase is wired up.
- * Swapping to Supabase is a change to `getFilesRepo()`, not this handler.
+ * Backed by whichever FilesRepo `getFilesRepo()` returns (Supabase when
+ * configured, otherwise the in-memory mock).
+ *
+ * P4.2 — supports `?limit=&offset=` pagination (indexed, newest-first) and
+ * sends short private caching headers. Auth-gated data stays `private`; SWR
+ * lets a client reuse a slightly stale page while revalidating.
  */
-export const GET = withAuth(async () => {
-  const files = await getFilesRepo().list();
-  return NextResponse.json<FilesListResponse>({ files });
+const MAX_LIMIT = 100;
+
+export const GET = withAuth(async (req) => {
+  const { searchParams } = new URL(req.url);
+  const limit = parseIntParam(searchParams.get("limit"));
+  const offset = parseIntParam(searchParams.get("offset")) ?? 0;
+
+  const { files, total } = await getFilesRepo().list(
+    limit != null ? { limit: Math.min(limit, MAX_LIMIT), offset } : undefined
+  );
+
+  return NextResponse.json<FilesListResponse>(
+    { files, total, limit: limit != null ? Math.min(limit, MAX_LIMIT) : null, offset },
+    {
+      headers: {
+        "Cache-Control": "private, max-age=10, stale-while-revalidate=30",
+      },
+    }
+  );
 });
+
+/** Parse a non-negative integer query param, or null if absent/invalid. */
+function parseIntParam(raw: string | null): number | null {
+  if (raw == null) return null;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
 
 /**
  * Persists the upload metadata through the repo so the new file shows up in a

@@ -7,15 +7,12 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 let client: SupabaseClient | undefined;
 
 /**
- * NOT WIRED UP YET.
+ * Server-side Supabase client (service-role key, server-only). Backs
+ * `SupabaseFilesRepo` (lib/files-repo.ts) for the `files` metadata table and,
+ * later, short-lived signed URLs for the private storage bucket (prd.md §4).
  *
- * Per prd.md §4, this should become the server-side Supabase client
- * (service role key, server-only) used to:
- *  - query/write the `files` metadata table
- *  - generate short-lived signed URLs for the private storage bucket
- *
- * Until SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are set, callers should
- * fall back to lib/mock-data.ts. This file just establishes the shape.
+ * `getFilesRepo()` only constructs the Supabase repo when both env vars are
+ * present, so this throws only on genuine misconfiguration.
  */
 export function getSupabaseServerClient() {
   const url = process.env.SUPABASE_URL;

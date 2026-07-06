@@ -39,6 +39,11 @@ export interface UploadPayload {
 /** Response from `GET /api/files`. */
 export interface FilesListResponse {
   files: InstallerFile[];
+  /** Total rows matching (ignoring the page window), for building pagination. */
+  total: number;
+  /** Echoed page window; `limit` is null when the full set was returned. */
+  limit: number | null;
+  offset: number;
 }
 
 /** Response from `POST /api/files`. */

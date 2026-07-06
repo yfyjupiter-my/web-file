@@ -10,9 +10,27 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
 ];
 
+// P4.9 — the Supabase project host, so next/image can optimize signed thumbnail
+// URLs from Storage once downloads land. Derived from SUPABASE_URL when set.
+const supabaseHost = (() => {
+  try {
+    return process.env.SUPABASE_URL ? new URL(process.env.SUPABASE_URL).hostname : undefined;
+  } catch {
+    return undefined;
+  }
+})();
+
 const nextConfig = {
+  // P4.9 — self-contained server output (minimal node_modules) for container/
+  // serverless deploys; pays off now that a real backend (Supabase) is wired in.
+  output: "standalone",
   // Enables instrumentation.ts (boot-time env validation, SEC-3).
   experimental: { instrumentationHook: true },
+  images: {
+    remotePatterns: supabaseHost
+      ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/**" }]
+      : [],
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
