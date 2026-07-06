@@ -23,6 +23,11 @@ const AddCategoryModal = dynamic(
   { ssr: false }
 );
 
+const EditFileModal = dynamic(
+  () => import("@/components/EditFileModal").then((m) => m.EditFileModal),
+  { ssr: false }
+);
+
 /**
  * Client island for the dashboard: owns only the interactive state (tab,
  * search, modal, conflict). Initial file data is fetched server-side and
@@ -47,6 +52,7 @@ export function DashboardControls({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<InstallerFile[] | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editTarget, setEditTarget] = useState<InstallerFile | null>(null);
 
   // P4.3 (frontend half) — debounce the search input so filtering doesn't run
   // on every keystroke. When search moves server-side (Supabase `ilike`), this
@@ -168,6 +174,7 @@ export function DashboardControls({
             selectedIds={selectedIds}
             onToggle={toggleSelect}
             onToggleAll={toggleSelectAll}
+            onEdit={setEditTarget}
           />
         </div>
       </div>
@@ -180,6 +187,19 @@ export function DashboardControls({
           onSaved={() => {
             setModalOpen(false);
             // Pull the just-persisted file from the server so it appears in the table.
+            router.refresh();
+          }}
+        />
+      )}
+
+      {editTarget && (
+        <EditFileModal
+          file={editTarget}
+          categories={categories}
+          onClose={() => setEditTarget(null)}
+          onConflict={(name) => setConflictName(name)}
+          onSaved={() => {
+            setEditTarget(null);
             router.refresh();
           }}
         />

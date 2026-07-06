@@ -23,6 +23,8 @@ export interface FilesRepo {
   findByName(name: string): Promise<InstallerFile | null>;
   /** Persist a new file and return the stored row. */
   create(input: NewFileInput): Promise<InstallerFile>;
+  /** Update an existing file's editable metadata and return the stored row, or null if the id doesn't exist. */
+  update(id: string, input: UpdateFileInput): Promise<InstallerFile | null>;
   /** The private-bucket object path for a file id, or null if unknown/mock. */
   getStorageKey(id: string): Promise<string | null>;
   /** Delete a file's metadata row. No-op if the id doesn't exist. */
@@ -56,6 +58,14 @@ export interface NewFileInput {
   type?: InstallerFile["type"];
   sizeBytes?: number;
   storageKey?: string;
+}
+
+/** Editable metadata fields for an existing file — no id, type, or binary details. */
+export interface UpdateFileInput {
+  name: string;
+  category: InstallerFile["category"];
+  version: string;
+  notes?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -105,6 +115,16 @@ class MockFilesRepo implements FilesRepo {
       notes: input.notes,
     };
     this.files.unshift(file);
+    return { ...file };
+  }
+
+  async update(id: string, input: UpdateFileInput): Promise<InstallerFile | null> {
+    const file = this.files.find((f) => f.id === id);
+    if (!file) return null;
+    file.name = input.name;
+    file.category = input.category;
+    file.version = input.version || "—";
+    file.notes = input.notes;
     return { ...file };
   }
 
@@ -213,6 +233,24 @@ class SupabaseFilesRepo implements FilesRepo {
 
     if (error) throw new Error(`files.create failed: ${error.message}`);
     return mapRow(data as FileRow);
+  }
+
+  async update(id: string, input: UpdateFileInput): Promise<InstallerFile | null> {
+    const client = getSupabaseServerClient();
+    const { data, error } = await client
+      .from("files")
+      .update({
+        name: input.name,
+        category: input.category,
+        version: input.version || "—",
+        notes: input.notes ?? null,
+      })
+      .eq("id", id)
+      .select(COLS)
+      .maybeSingle();
+
+    if (error) throw new Error(`files.update failed: ${error.message}`);
+    return data ? mapRow(data as FileRow) : null;
   }
 
   async getStorageKey(id: string): Promise<string | null> {

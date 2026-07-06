@@ -84,6 +84,17 @@ export interface DeleteResponse {
   error?: string;
 }
 
+/** Body for `PATCH /api/files/:id` — editable metadata only. */
+export type UpdateFilePayload = UploadPayload;
+
+/** Response from `PATCH /api/files/:id`. */
+export interface UpdateResponse {
+  ok: boolean;
+  conflict?: boolean;
+  file?: InstallerFile;
+  error?: string;
+}
+
 /** Response from `GET /api/categories`. */
 export interface CategoriesListResponse {
   categories: string[];

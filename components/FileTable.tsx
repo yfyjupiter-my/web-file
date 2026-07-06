@@ -6,9 +6,10 @@ interface Props {
   selectedIds: Set<string>;
   onToggle: (id: string) => void;
   onToggleAll: () => void;
+  onEdit: (file: InstallerFile) => void;
 }
 
-export function FileTable({ files, selectedIds, onToggle, onToggleAll }: Props) {
+export function FileTable({ files, selectedIds, onToggle, onToggleAll, onEdit }: Props) {
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
   const selectedVisible = files.filter((f) => selectedIds.has(f.id)).length;
   const allSelected = files.length > 0 && selectedVisible === files.length;
@@ -64,7 +65,7 @@ export function FileTable({ files, selectedIds, onToggle, onToggleAll }: Props) 
             <td>{file.version}</td>
             <td>{file.uploadedAt}</td>
             <td>{file.sizeLabel}</td>
-            <td>
+            <td className="file-table-actions">
               <a
                 className="row-download"
                 href={`/api/files/${file.id}/download`}
@@ -72,6 +73,14 @@ export function FileTable({ files, selectedIds, onToggle, onToggleAll }: Props) 
               >
                 Download
               </a>
+              <button
+                type="button"
+                className="row-edit"
+                onClick={() => onEdit(file)}
+                aria-label={`Edit ${file.name}`}
+              >
+                Edit
+              </button>
             </td>
           </tr>
         ))}
