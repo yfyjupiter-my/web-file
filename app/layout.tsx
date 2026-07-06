@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ACTIVE_THEME } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: "Installer Vault",
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="sunset">
+    <html lang="en" data-theme={ACTIVE_THEME}>
       <body>{children}</body>
     </html>
   );

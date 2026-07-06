@@ -66,21 +66,27 @@ export function DashboardControls({
 
   return (
     <>
-      <div className="tabs-row">
-        <div
+      <div className="tabs-row" role="tablist" aria-label="Filter by category">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "All"}
           className={`tab ${activeTab === "All" ? "active" : ""}`}
           onClick={() => setActiveTab("All")}
         >
           All ({initialFiles.length})
-        </div>
+        </button>
         {categories.map((c) => (
-          <div
+          <button
             key={c}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === c}
             className={`tab ${activeTab === c ? "active" : ""}`}
             onClick={() => setActiveTab(c)}
           >
             {c}
-          </div>
+          </button>
         ))}
       </div>
 
@@ -93,13 +99,25 @@ export function DashboardControls({
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
-        <div className="view-toggle">
-          <div className={view === "grid" ? "active" : ""} onClick={() => setView("grid")}>
+        <div className="view-toggle" role="group" aria-label="View mode">
+          <button
+            type="button"
+            aria-label="Grid view"
+            aria-pressed={view === "grid"}
+            className={view === "grid" ? "active" : ""}
+            onClick={() => setView("grid")}
+          >
             ▦
-          </div>
-          <div className={view === "list" ? "active" : ""} onClick={() => setView("list")}>
+          </button>
+          <button
+            type="button"
+            aria-label="List view"
+            aria-pressed={view === "list"}
+            className={view === "list" ? "active" : ""}
+            onClick={() => setView("list")}
+          >
             ☰
-          </div>
+          </button>
         </div>
         <button className="btn btn-upload" onClick={() => setDrawerOpen(true)}>
           ＋ Upload Installer

@@ -5,3 +5,6 @@ out
 .env.local
 *.log
 .DS_Store
+
+# Local agent working dir (issue tracker / PRDs) — created on demand
+.scratch/

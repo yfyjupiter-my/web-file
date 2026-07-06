@@ -3,6 +3,7 @@
 ### Issue tracker
 
 Issues and PRDs live as markdown files under `.scratch/<feature-slug>/`. See `docs/agents/issue-tracker.md`.
+`.scratch/` is a gitignored local working directory, created on demand — it won't exist in a fresh checkout.
 
 ### Triage labels
 
@@ -11,6 +12,7 @@ Uses the default label vocabulary (needs-triage, needs-info, ready-for-agent, re
 ### Domain docs
 
 Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+`docs/adr/` exists (`0001-supabase-rls.md`); `CONTEXT.md` is created lazily by `/grill-with-docs` and may be absent — proceed silently if so.
 
 ### Audit Check Rules
 Breakdown required actions into smaller subtaks and must comply following rules:

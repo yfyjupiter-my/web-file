@@ -378,6 +378,11 @@ body::before {
   .tab:hover {
     color: var(--text);
   }
+  .tab:focus-visible,
+  .view-toggle > button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
   .tab.active {
     color: var(--accent);
     font-weight: 700;
@@ -424,7 +429,7 @@ body::before {
     border-radius: var(--radius-sm);
     overflow: hidden;
   }
-  .view-toggle > div {
+  .view-toggle > button {
     width: 40px;
     height: 42px;
     display: flex;
@@ -433,8 +438,11 @@ body::before {
     cursor: pointer;
     color: var(--text-faint);
     background: var(--surface-2);
+    border: none;
+    font-family: inherit;
+    font-size: inherit;
   }
-  .view-toggle > div.active {
+  .view-toggle > button.active {
     background: var(--accent);
     color: var(--on-accent);
   }
@@ -510,7 +518,7 @@ body::before {
     display: flex;
     border-top: 1px solid var(--border);
   }
-  .card-footer > div {
+  .card-footer > button {
     flex: 1;
     height: 40px;
     display: flex;
@@ -520,14 +528,31 @@ body::before {
     font-weight: 600;
     cursor: pointer;
     color: var(--text-dim);
+    background: none;
+    border: none;
+    font-family: inherit;
   }
-  .card-footer > div:hover {
+  .card-footer > button:hover {
     color: var(--text);
+  }
+  .card-footer > button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
   }
   .card-footer .dl {
     background: var(--accent-soft);
     color: var(--accent);
     border-right: 1px solid var(--border);
+  }
+  .card-notes {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   /* Screen 3 — drawer over dimmed list */
@@ -692,12 +717,34 @@ body::before {
     height: 44px;
   }
 
+  .dashboard-loading {
+    padding: 64px 24px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+    background: var(--surface-solid);
+  }
+  .drawer-error {
+    margin: 0 20px 8px;
+  }
+
   /* 5.13 Toast / Alert */
   .toast-wrap {
     padding: 64px 24px;
     display: flex;
     justify-content: center;
     background: var(--surface-solid);
+  }
+  /* Fixed backdrop variant used by the conflict dialog (see DESIGN.md). */
+  .toast-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(58, 43, 38, 0.35);
   }
   .toast {
     width: 480px;

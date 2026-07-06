@@ -8,8 +8,8 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
-import { checkPassword, isAuthenticated, SESSION_COOKIE } from "./auth";
-import { createSessionToken } from "./session";
+import { checkPassword, isAuthenticated } from "./auth";
+import { createSessionToken, SESSION_COOKIE } from "./session";
 
 describe("checkPassword", () => {
   const original = process.env.SITE_PASSWORD;

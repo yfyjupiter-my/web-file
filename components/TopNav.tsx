@@ -1,4 +1,4 @@
-export function TopNav({ adminOn }: { adminOn: boolean }) {
+export function TopNav() {
   return (
     <div className="app-topnav">
       <div className="logo">
@@ -6,7 +6,6 @@ export function TopNav({ adminOn }: { adminOn: boolean }) {
         Installer Vault
       </div>
       <div className="topnav-right">
-        <span className="pill">{adminOn ? "Admin: On" : "Admin Mode"}</span>
         <div className="avatar" />
       </div>
     </div>

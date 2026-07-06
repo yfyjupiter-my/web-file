@@ -32,5 +32,3 @@ export function checkPassword(candidate: string): boolean {
 export async function isAuthenticated(): Promise<boolean> {
   return verifySessionToken(cookies().get(SESSION_COOKIE)?.value);
 }
-
-export { SESSION_COOKIE };

@@ -15,21 +15,27 @@ export default function PasswordGatePage() {
     setSubmitting(true);
     setError(null);
 
-    const res = await fetch("/api/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
 
-    setSubmitting(false);
+      if (res.ok) {
+        router.push("/dashboard");
+        return;
+      }
 
-    if (res.ok) {
-      router.push("/dashboard");
-    } else {
       const data: AuthResponse = await res
         .json()
         .catch(() => ({ ok: false, error: "Something went wrong." }));
       setError(data.error ?? "Incorrect password.");
+    } catch {
+      // Network failure / request aborted — surface it instead of hanging.
+      setError("Couldn't reach the server. Check your connection and try again.");
+    } finally {
+      setSubmitting(false);
     }
   }
 

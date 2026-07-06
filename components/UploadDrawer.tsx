@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { categories } from "@/lib/categories";
-import type { UploadPayload } from "@/lib/types";
+import type { UploadPayload, UploadResponse } from "@/lib/types";
 
 interface Props {
   onClose: () => void;
@@ -16,23 +16,38 @@ export function UploadDrawer({ onClose, onConflict, onSaved }: Props) {
   const [version, setVersion] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSave() {
     setSaving(true);
+    setError(null);
     const payload: UploadPayload = { name, category, version, notes };
-    const res = await fetch("/api/files", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    setSaving(false);
 
-    if (res.status === 409) {
-      onConflict(name);
-      return;
-    }
-    if (res.ok) {
-      onSaved();
+    try {
+      const res = await fetch("/api/files", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 409) {
+        onConflict(name);
+        return;
+      }
+      if (res.ok) {
+        onSaved();
+        return;
+      }
+
+      const data: UploadResponse = await res
+        .json()
+        .catch(() => ({ ok: false }));
+      setError(data.error ?? "Upload failed. Please try again.");
+    } catch {
+      // Network failure / request aborted — surface it instead of hanging.
+      setError("Couldn't reach the server. Check your connection and try again.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -88,6 +103,7 @@ export function UploadDrawer({ onClose, onConflict, onSaved }: Props) {
           />
         </div>
       </div>
+      {error && <div className="error-text drawer-error">{error}</div>}
       <div className="drawer-footer">
         <button className="btn ghost" onClick={onClose}>
           Cancel

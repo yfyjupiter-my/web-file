@@ -385,6 +385,13 @@ textarea.drawer-input{height:70px; padding-top:11px; resize:none;}
 
 Floating card with gradient top strip and icon header.
 
+**Backdrop.** When used as the upload conflict dialog (`ConflictToast`), the card
+is centered over a fixed, semi-opaque scrim — `.toast-overlay` (`position:fixed;
+inset:0; z-index:10; background:rgba(58,43,38,0.35)`), a warm-tinted dim of the
+`--sunset-*` palette. The dialog carries `role="alertdialog"` / `aria-modal="true"`.
+The alternate `.toast-wrap` class is the inline (non-overlay) placement used in
+the static mockup.
+
 ```css
 .toast{
   width:480px; border-radius:var(--radius); overflow:hidden;

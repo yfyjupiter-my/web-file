@@ -6,7 +6,7 @@ interface Props {
 
 export function ConflictToast({ fileName, onKeepBoth, onReplace }: Props) {
   return (
-    <div className="toast-wrap" style={{ position: "fixed", inset: 0, background: "rgba(58,43,38,0.35)", zIndex: 10 }}>
+    <div className="toast-overlay" role="alertdialog" aria-modal="true" aria-label="File already exists">
       <div className="toast">
         <div className="toast-strip" />
         <div className="toast-body">

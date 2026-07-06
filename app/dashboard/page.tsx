@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   return (
     <main className="page-wrap">
       <div className="screen">
-        <TopNav adminOn={false} />
+        <TopNav />
         <StatStrip files={files} />
         <DashboardControls initialFiles={files} />
       </div>

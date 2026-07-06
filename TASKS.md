@@ -86,19 +86,21 @@ The **frontend-only** tasks that stand alone from the data source are done now; 
 
 ---
 
-## Phase 5 — Cleanup, correctness & docs
+## Phase 5 — Cleanup, correctness & docs — ✅ DONE (2026-07-06)
 
-- [ ] **P5.1 — Remove the fake "Admin Mode" concept.** `adminOn` prop / "Admin Mode" pill implies a role system that doesn't exist (v1 scopes roles out). Rename/remove in `app/dashboard/page.tsx:31` and `components/TopNav.tsx:9`. `[CODE-46]` `[CODE-64]` Medium
-- [ ] **P5.2 — Fix `StatStrip`.** Remove dead/misnamed `totalSize` var; source stats from the data layer instead of hardcoded `1.2 TB` / `318`. `[CODE-60]` `[CODE-61]` Medium
-- [ ] **P5.3 — Wrap `fetch` in try/catch.** In `app/page.tsx` `handleSubmit` and `UploadDrawer` — a network rejection currently leaves `saving`/loading stuck forever. `[CODE-70]` Medium
-- [ ] **P5.4 — Reconcile `CLAUDE.md` with reality.** It references nonexistent `.scratch/` and `docs/agents/*.md`. Either create those or remove the references. `[CODE-105]` Medium
-- [ ] **P5.5 — Remove dead `SESSION_COOKIE` re-export** from `lib/auth.ts:23` (every consumer imports from `lib/session.ts`). `[CODE-75]` Low-Medium
-- [ ] **P5.6 — Derive `Tab` type from `Category`** in `app/dashboard/page.tsx`, not from the mock-data runtime array. `[CODE-45]` Low
-- [ ] **P5.7 — Decide `notes` field's fate.** Currently write-only (captured by form, never rendered). Either render it in `FileCard` or drop it. `[CODE-88]` Low
-- [ ] **P5.8 — Wire up inert controls.** `Download` / `⋯` in `FileCard` and the non-interactive tab `div`s need handlers + keyboard/ARIA semantics. `[CODE-56]` Low (overlaps accessibility audit)
-- [ ] **P5.9 — Style consistency.** Move `ConflictToast` inline styles into `globals.css`; standardize on a named `interface Props` across components. `[CODE-51]` `[CODE-65]` Low
-- [ ] **P5.10 — Add `app/dashboard/loading.tsx`.** Suspense/loading boundary ahead of real async data. `[RUN-2]` Low
-- [ ] **P5.11 — Naming/theme nits.** `data-theme="sunset"` → a typed `Theme` constant; consider renaming `PasswordGatePage`; document `ConflictToast`'s backdrop in `DESIGN.md`. `[CODE-25]` `[CODE-29]` `[CODE-108]` Low
+- [x] **P5.1 — Remove the fake "Admin Mode" concept.** Dropped the `adminOn` prop and the "Admin Mode" pill from `components/TopNav.tsx` (now props-free); `app/dashboard/page.tsx` renders `<TopNav />`. No phantom role system implied. `[CODE-46]` `[CODE-64]` Medium
+- [x] **P5.2 — Fix `StatStrip`.** New `lib/stats.ts` (`parseSizeLabelMB`/`formatStorageMB`/`computeFileStats`) derives stats from the file list: total installers, computed storage-used (sums parsed size labels; placeholders → 0), distinct file formats, and real category count. Removed the hardcoded `1.2 TB` / `318` / fake `▲ 3` delta and the stray inline `totalSize`. Covered by `lib/stats.test.ts`. `[CODE-60]` `[CODE-61]` Medium
+- [x] **P5.3 — Wrap `fetch` in try/catch.** `app/page.tsx` `handleSubmit` and `UploadDrawer.handleSave` now use try/catch/finally — a network rejection surfaces a friendly error and always clears `submitting`/`saving` instead of hanging. Added an inline error line to the drawer. `[CODE-70]` Medium
+- [x] **P5.4 — Reconcile `CLAUDE.md` with reality.** `docs/agents/*.md` and `docs/adr/0001-*` already exist. Added `.scratch/` to `.gitignore` (on-demand working dir) and annotated `CLAUDE.md` that `.scratch/` + `CONTEXT.md` are created lazily and may be absent in a fresh checkout (matches `docs/agents/domain.md`'s "proceed silently" contract). `[CODE-105]` Medium
+- [x] **P5.5 — Remove dead `SESSION_COOKIE` re-export** from `lib/auth.ts`. The lone consumer was `lib/auth.test.ts`; repointed it to import `SESSION_COOKIE` from `lib/session.ts` (the canonical source). `[CODE-75]` Low-Medium
+- [x] **P5.6 — Derive `Tab` type from `Category`.** Already satisfied in P2.2 — `Tab = "All" | Category` lives in `lib/categories.ts` and `DashboardControls` imports it; no derivation from the mock-data runtime array remains. `[CODE-45]` Low
+- [x] **P5.7 — Decide `notes` field's fate.** Kept and now rendered — `FileCard` shows `notes` (2-line clamp via `.card-notes`) when present, so the captured field is no longer write-only. `[CODE-88]` Low
+- [x] **P5.8 — Wire up inert controls.** Tab `div`s → `<button role="tab" aria-selected>` in a `role="tablist"`; view-toggle `div`s → `<button aria-pressed>` in a `role="group"`; `FileCard` footer `Download`/`⋯` → `<button>` with `aria-label` (real download stays Supabase-Storage-gated). Added `:focus-visible` outlines. CSS selectors updated to `> button` with resets. `[CODE-56]` Low
+- [x] **P5.9 — Style consistency.** `ConflictToast` inline backdrop moved to a `.toast-overlay` class in `globals.css` (+ `role="alertdialog"`/`aria-modal`). Standardized on a named `interface Props` across `StatStrip`/`FileCard`/`ConflictToast`/`UploadDrawer` (`TopNav` is now props-free). `[CODE-51]` `[CODE-65]` Low
+- [x] **P5.10 — Add `app/dashboard/loading.tsx`.** Suspense fallback (`role="status"`) renders the nav + a "Loading installers…" placeholder ahead of the real async Supabase query. `[RUN-2]` Low
+- [x] **P5.11 — Naming/theme nits.** `data-theme="sunset"` → typed `ACTIVE_THEME` constant in `lib/theme.ts` (`Theme` union); documented `ConflictToast`'s `.toast-overlay` backdrop in `DESIGN.md` §5.13. (`PasswordGatePage` rename judged low-value churn — left as-is.) `[CODE-25]` `[CODE-29]` `[CODE-108]` Low
+
+> ✅ Verified green: `typecheck` · `lint` (0 warnings) · **37 tests** (added `lib/stats.test.ts`) · `build` (dashboard route 2.48 kB). All 11 items landed; no items deferred.
 
 ---
 
