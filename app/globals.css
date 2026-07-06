@@ -90,6 +90,13 @@ body::before {
     height: 100%;
     min-height: 0;
   }
+  /* Full-bleed layouts whose content can exceed the viewport (e.g. a growing
+     file table) need the page to scroll instead of clipping at 100vh. */
+  .screen.screen--full.screen--scroll {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
 
   /* 5.15 Screen / Panel Container */
   .screen {

@@ -16,8 +16,8 @@ export default async function DashboardPage() {
   const { files } = await getFilesRepo().list();
 
   return (
-    <main className="page-wrap">
-      <div className="screen">
+    <main className="page-wrap page-wrap--full">
+      <div className="screen screen--full screen--scroll">
         <TopNav />
         <StatStrip files={files} />
         <DashboardControls initialFiles={files} />
