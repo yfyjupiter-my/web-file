@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { withAuth, parseJsonBody, requireSameOrigin } from "@/lib/api-helpers";
 import { getFilesRepo } from "@/lib/files-repo";
 import { getCategoriesRepo } from "@/lib/categories-repo";
-import { removeObject } from "@/lib/storage";
-import { validateUploadPayload } from "@/lib/validation";
-import type { DeleteResponse, UpdateFilePayload, UpdateResponse } from "@/lib/types";
+import { getObjectSize, removeObject } from "@/lib/storage";
+import { validateFilename, validateUploadPayload } from "@/lib/validation";
+import type { DeleteResponse, FileType, UpdateFilePayload, UpdateResponse } from "@/lib/types";
 
 /**
  * Deletes one installer: its Storage object (if any) and its metadata row.
@@ -25,7 +25,12 @@ export const DELETE = withAuth(async (req) => {
   return NextResponse.json<DeleteResponse>({ ok: true });
 });
 
-/** Updates one installer's editable metadata (name/category/version/notes). */
+/**
+ * Updates one installer's editable metadata (name/category/version/notes), and
+ * optionally swaps its binary when the body carries a `storageKey` from a prior
+ * `POST /api/files/:id/replace-url` upload (the old object is removed after
+ * the row commits successfully).
+ */
 export const PATCH = withAuth(async (req) => {
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;
@@ -52,12 +57,54 @@ export const PATCH = withAuth(async (req) => {
     );
   }
 
-  const file = await repo.update(id, result.value);
+  // Present only when the user attached a replacement file in EditFileModal.
+  const storageKey = body?.storageKey ? String(body.storageKey) : undefined;
+  let previousStorageKey: string | null = null;
+  let sizeBytes: number | undefined;
+  let type: FileType | undefined;
+
+  if (storageKey) {
+    if (!storageKey.startsWith(`${id}/`)) {
+      return NextResponse.json<UpdateResponse>(
+        { ok: false, error: "Invalid upload reference." },
+        { status: 400 }
+      );
+    }
+
+    const size = await getObjectSize(storageKey);
+    if (size == null) {
+      return NextResponse.json<UpdateResponse>(
+        { ok: false, error: "Uploaded file not found. Please retry the upload." },
+        { status: 400 }
+      );
+    }
+
+    const fileCheck = validateFilename(storageKey.slice(id.length + 1));
+    if (!fileCheck.ok) {
+      await removeObject(storageKey);
+      return NextResponse.json<UpdateResponse>(
+        { ok: false, error: fileCheck.error },
+        { status: 400 }
+      );
+    }
+
+    sizeBytes = size;
+    type = fileCheck.type;
+    previousStorageKey = await repo.getStorageKey(id);
+  }
+
+  const file = await repo.update(id, { ...result.value, storageKey, sizeBytes, type });
   if (!file) {
+    if (storageKey) await removeObject(storageKey);
     return NextResponse.json<UpdateResponse>(
       { ok: false, error: "File not found." },
       { status: 404 }
     );
+  }
+
+  // Clean up the old object now that the row points at the new one.
+  if (previousStorageKey && previousStorageKey !== storageKey) {
+    await removeObject(previousStorageKey);
   }
 
   return NextResponse.json<UpdateResponse>({ ok: true, file });

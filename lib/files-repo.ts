@@ -60,12 +60,19 @@ export interface NewFileInput {
   storageKey?: string;
 }
 
-/** Editable metadata fields for an existing file — no id, type, or binary details. */
+/**
+ * Editable fields for an existing file. `storageKey`/`sizeBytes`/`type` are
+ * present only when the caller is replacing the underlying binary (same row,
+ * new object) — omitted for a metadata-only edit.
+ */
 export interface UpdateFileInput {
   name: string;
   category: InstallerFile["category"];
   version: string;
   notes?: string;
+  storageKey?: string;
+  sizeBytes?: number;
+  type?: InstallerFile["type"];
 }
 
 // ---------------------------------------------------------------------------
@@ -125,6 +132,8 @@ class MockFilesRepo implements FilesRepo {
     file.category = input.category;
     file.version = input.version || "—";
     file.notes = input.notes;
+    if (input.sizeBytes != null) file.sizeLabel = formatBytes(input.sizeBytes);
+    if (input.type) file.type = input.type;
     return { ...file };
   }
 
@@ -237,14 +246,20 @@ class SupabaseFilesRepo implements FilesRepo {
 
   async update(id: string, input: UpdateFileInput): Promise<InstallerFile | null> {
     const client = getSupabaseServerClient();
+    const patch: Record<string, unknown> = {
+      name: input.name,
+      category: input.category,
+      version: input.version || "—",
+      notes: input.notes ?? null,
+    };
+    // Only present when the caller is swapping the binary for this row.
+    if (input.storageKey) patch.storage_key = input.storageKey;
+    if (input.sizeBytes != null) patch.size_bytes = input.sizeBytes;
+    if (input.type) patch.type = input.type;
+
     const { data, error } = await client
       .from("files")
-      .update({
-        name: input.name,
-        category: input.category,
-        version: input.version || "—",
-        notes: input.notes ?? null,
-      })
+      .update(patch)
       .eq("id", id)
       .select(COLS)
       .maybeSingle();

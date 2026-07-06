@@ -1,7 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import type { InstallerFile, UpdateResponse } from "@/lib/types";
+import { useRef, useState } from "react";
+import {
+  ALLOWED_EXTENSIONS,
+  MAX_UPLOAD_BYTES,
+  MAX_UPLOAD_MB,
+} from "@/lib/validation";
+import { formatBytes } from "@/lib/stats";
+import type {
+  InstallerFile,
+  ReplaceUrlResponse,
+  UpdateResponse,
+} from "@/lib/types";
 
 interface Props {
   file: InstallerFile;
@@ -10,6 +20,8 @@ interface Props {
   onConflict: (name: string) => void;
   onSaved: () => void;
 }
+
+const ACCEPT = [".exe", ".msi", ".dmg", ".zip", ".pkg"];
 
 // The stored `version` string is "<version> · <date>" (see UploadModal); split
 // it back out so each field can be edited independently.
@@ -26,13 +38,66 @@ export function EditFileModal({ file, categories, onClose, onConflict, onSaved }
   const [version, setVersion] = useState(initialVersion);
   const [releaseDate, setReleaseDate] = useState(initialDate);
   const [notes, setNotes] = useState(file.notes ?? "");
+  const [replacement, setReplacement] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Client-side pre-check (the server re-validates authoritatively).
+  function onFilePicked(f: File | null) {
+    setError(null);
+    if (!f) return;
+    const ext = f.name.slice(f.name.lastIndexOf(".")).toLowerCase();
+    if (!ACCEPT.includes(ext)) {
+      setError(`Unsupported file type. Allowed: ${ALLOWED_EXTENSIONS}.`);
+      return;
+    }
+    if (f.size > MAX_UPLOAD_BYTES) {
+      setError(`File exceeds the ${MAX_UPLOAD_MB}MB limit.`);
+      return;
+    }
+    setReplacement(f);
+  }
 
   async function handleSave() {
     setSaving(true);
     setError(null);
     try {
+      let storageKey: string | undefined;
+      let sizeBytes: number | undefined;
+
+      if (replacement) {
+        // 1. Reserve a new object path under this file's existing id.
+        const urlRes = await fetch(`/api/files/${file.id}/replace-url`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: replacement.name }),
+        });
+        const urlData: ReplaceUrlResponse = await urlRes
+          .json()
+          .catch(() => ({ ok: false }));
+        if (!urlRes.ok || !urlData.ok || !urlData.uploadUrl || !urlData.storageKey) {
+          setError(urlData.error ?? "Couldn't start the upload. Please try again.");
+          return;
+        }
+
+        // 2. Upload the new bytes straight to Storage.
+        const put = await fetch(urlData.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": replacement.type || "application/octet-stream" },
+          body: replacement,
+        });
+        if (!put.ok) {
+          setError("Upload failed while sending the file. Please try again.");
+          return;
+        }
+
+        storageKey = urlData.storageKey;
+        sizeBytes = replacement.size;
+      }
+
+      // 3. Commit the metadata (and, if attached, the new binary pointer).
       const res = await fetch(`/api/files/${file.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -41,6 +106,7 @@ export function EditFileModal({ file, categories, onClose, onConflict, onSaved }
           category,
           version: [version.trim(), releaseDate.trim()].filter(Boolean).join(" · "),
           notes,
+          ...(storageKey ? { storageKey, sizeBytes } : {}),
         }),
       });
       if (res.status === 409) {
@@ -70,6 +136,45 @@ export function EditFileModal({ file, categories, onClose, onConflict, onSaved }
           </button>
         </div>
         <div className="modal-body">
+          <div
+            className={`modal-dropzone ${dragOver ? "drag-over" : ""}`}
+            role="button"
+            tabIndex={0}
+            aria-label="Choose a replacement file"
+            onClick={() => inputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                inputRef.current?.click();
+              }
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              onFilePicked(e.dataTransfer.files?.[0] ?? null);
+            }}
+          >
+            <div className="up">↑</div>
+            {replacement ? (
+              <small>
+                {replacement.name} · {formatBytes(replacement.size)}
+              </small>
+            ) : (
+              <small>Drag a new {file.type} here to replace it, or click to browse</small>
+            )}
+            <input
+              ref={inputRef}
+              type="file"
+              accept={ACCEPT.join(",")}
+              hidden
+              onChange={(e) => onFilePicked(e.target.files?.[0] ?? null)}
+            />
+          </div>
           <div className="form-grid">
             <div className="modal-field">
               <label>Display Name</label>

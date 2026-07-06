@@ -96,8 +96,25 @@ export interface DeleteResponse {
   error?: string;
 }
 
-/** Body for `PATCH /api/files/:id` — editable metadata only. */
-export type UpdateFilePayload = UploadPayload;
+/** Body for `PATCH /api/files/:id` — metadata, plus an optional binary replacement. */
+export interface UpdateFilePayload extends UploadPayload {
+  /** Present only when the user attached a new file to replace the existing binary. */
+  storageKey?: string;
+  sizeBytes?: number;
+}
+
+/** Body for `POST /api/files/:id/replace-url` — step 1 of replacing an existing binary. */
+export interface ReplaceUrlPayload {
+  filename: string;
+}
+
+/** Response from `POST /api/files/:id/replace-url`. */
+export interface ReplaceUrlResponse {
+  ok: boolean;
+  uploadUrl?: string;
+  storageKey?: string;
+  error?: string;
+}
 
 /** Response from `PATCH /api/files/:id`. */
 export interface UpdateResponse {
