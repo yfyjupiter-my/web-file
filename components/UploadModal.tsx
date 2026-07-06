@@ -26,6 +26,7 @@ export function UploadModal({ categories, onClose, onConflict, onSaved }: Props)
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [version, setVersion] = useState("");
+  const [releaseDate, setReleaseDate] = useState("");
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -96,7 +97,7 @@ export function UploadModal({ categories, onClose, onConflict, onSaved }: Props)
       const payload: UploadCommitPayload = {
         name,
         category,
-        version,
+        version: [version.trim(), releaseDate.trim()].filter(Boolean).join(" · "),
         notes,
         id: urlData.id,
         storageKey: urlData.storageKey,
@@ -196,12 +197,21 @@ export function UploadModal({ categories, onClose, onConflict, onSaved }: Props)
               </select>
             </div>
             <div className="modal-field">
-              <label>Version / Date</label>
+              <label>Version</label>
               <input
                 className="modal-input"
-                placeholder="v2.4 · Jun 28, 2026"
+                placeholder="v2.4"
                 value={version}
                 onChange={(e) => setVersion(e.target.value)}
+              />
+            </div>
+            <div className="modal-field">
+              <label>Date</label>
+              <input
+                className="modal-input"
+                placeholder="Jun 28, 2026"
+                value={releaseDate}
+                onChange={(e) => setReleaseDate(e.target.value)}
               />
             </div>
             <div className="modal-field full">

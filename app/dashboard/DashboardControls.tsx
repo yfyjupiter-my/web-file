@@ -142,7 +142,7 @@ export function DashboardControls({
               />
             </label>
             <button className="btn btn-upload" onClick={() => setModalOpen(true)}>
-              ＋ Upload Installer
+              Upload
             </button>
           </div>
 
