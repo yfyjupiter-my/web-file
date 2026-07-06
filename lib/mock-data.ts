@@ -1,8 +1,10 @@
 import type { InstallerFile } from "./types";
 
 /**
- * Placeholder data mirroring mockup.html's dashboard screen.
- * Swap for a real query (see lib/supabase.ts) once Supabase is wired up.
+ * TEMPORARY FIXTURES — safe to delete once Supabase is wired up.
+ *
+ * These seed the mock repository (lib/files-repo.ts). The permanent category
+ * taxonomy lives in lib/categories.ts and is NOT part of this file.
  */
 export const mockFiles: InstallerFile[] = [
   { id: "1", name: "Setup Wizard", type: "EXE", category: "Utilities", version: "v2.4", sizeLabel: "84 MB", uploadedAt: "2026-06-28" },
@@ -13,12 +15,4 @@ export const mockFiles: InstallerFile[] = [
   { id: "6", name: "AV Scanner", type: "EXE", category: "Security / AV", version: "v6.2", sizeLabel: "92 MB", uploadedAt: "2026-06-08" },
   { id: "7", name: "VPN Client", type: "MSI", category: "Security / AV", version: "v1.3", sizeLabel: "38 MB", uploadedAt: "2026-06-04" },
   { id: "8", name: "Font Pack", type: "ZIP", category: "Productivity", version: "v5.5", sizeLabel: "19 MB", uploadedAt: "2026-06-01" },
-];
-
-export const categories: InstallerFile["category"][] = [
-  "OS / Drivers",
-  "Productivity",
-  "Security / AV",
-  "Utilities",
-  "Uncategorized",
 ];

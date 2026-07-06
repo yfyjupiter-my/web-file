@@ -1,5 +1,5 @@
 import type { InstallerFile } from "@/lib/types";
-import { categories } from "@/lib/mock-data";
+import { categories } from "@/lib/categories";
 
 export function StatStrip({ files }: { files: InstallerFile[] }) {
   return (

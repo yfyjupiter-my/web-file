@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { AuthResponse } from "@/lib/types";
 
 export default function PasswordGatePage() {
   const router = useRouter();
@@ -25,7 +26,9 @@ export default function PasswordGatePage() {
     if (res.ok) {
       router.push("/dashboard");
     } else {
-      const data = await res.json().catch(() => ({ error: "Something went wrong." }));
+      const data: AuthResponse = await res
+        .json()
+        .catch(() => ({ ok: false, error: "Something went wrong." }));
       setError(data.error ?? "Incorrect password.");
     }
   }

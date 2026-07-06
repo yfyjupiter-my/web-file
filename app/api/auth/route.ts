@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkPassword } from "@/lib/auth";
 import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, createSessionToken } from "@/lib/session";
 import { checkRateLimit, recordFailure, recordSuccess } from "@/lib/rate-limit";
+import type { AuthResponse } from "@/lib/types";
 
 /** Best-effort client identifier for throttling. Falls back to a shared bucket. */
 function clientKey(req: NextRequest): string {
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   const limit = checkRateLimit(key);
   if (!limit.allowed) {
-    return NextResponse.json(
+    return NextResponse.json<AuthResponse>(
       { ok: false, error: "Too many attempts. Please wait and try again." },
       {
         status: 429,
@@ -28,13 +29,13 @@ export async function POST(req: NextRequest) {
 
   if (typeof password !== "string" || !checkPassword(password)) {
     recordFailure(key);
-    return NextResponse.json({ ok: false, error: "Incorrect password." }, { status: 401 });
+    return NextResponse.json<AuthResponse>({ ok: false, error: "Incorrect password." }, { status: 401 });
   }
 
   recordSuccess(key);
 
   const token = await createSessionToken();
-  const res = NextResponse.json({ ok: true });
+  const res = NextResponse.json<AuthResponse>({ ok: true });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",

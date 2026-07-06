@@ -32,19 +32,21 @@ Set up the safety net so later refactors can't silently regress.
 
 ---
 
-## Phase 2 — Data-access architecture refactor
+## Phase 2 — Data-access architecture refactor — ✅ DONE (2026-07-06)
 
 The single biggest layering problem: the dashboard bypasses the API and reads mock data directly.
 Fix the seam before Supabase is wired in.
 
-- [ ] **P2.1 — Introduce a `lib/files-repo.ts` abstraction.** Define a typed repository interface with a mock implementation now and a Supabase implementation later (dependency-injection seam). Route all file reads/writes through it. `[CODE-cross#2]` `[RUN-8]` High
-- [ ] **P2.2 — Split `lib/mock-data.ts`.** Separate permanent domain taxonomy → `lib/categories.ts` (keep) from temporary fixtures → `lib/mock-data.ts` (deletable). Update the 4 consumers. `[CODE-78]` High
-- [ ] **P2.3 — Dashboard fetches through the API/repo, not `mockFiles`.** Remove the direct `mockFiles` import from `app/dashboard/page.tsx`; make the API route the single source of truth. `[CODE-cross#1]` High / `[RUN-2]`
-- [ ] **P2.4 — Convert dashboard to a Server Component + client island.** Fetch data server-side; extract only interactive bits (tabs, search, view toggle, drawer state) into a small `DashboardControls` client component. Reduces client JS bundle. `[RUN-1]` High
-- [ ] **P2.5 — Add API contract types to `lib/types.ts`.** `AuthResponse`, `UploadPayload`, `FilesListResponse`. Type every route handler + fetch call. `[CODE-87]` Medium
-- [ ] **P2.6 — Extract shared helpers.** `withAuth(handler)` HOF for the duplicated `isAuthenticated()` guard; a shared JSON-body parse helper; a reusable name-conflict check. `[CODE-cross#4]` Medium
-- [ ] **P2.7 — Make the upload flow observable.** `POST /api/files` should persist (via the repo) and the new file should appear in the grid; or clearly signpost demo-only behavior in the UI. `[CODE-cross#3]` Medium
-- [ ] **P2.8 — Add `import "server-only"` guards.** To `lib/supabase.ts` and `lib/auth.ts` (which calls `next/headers`) to hard-fail on accidental client import. `[SEC-8]` `[CODE-74]` Low
+- [x] **P2.1 — Introduce a `lib/files-repo.ts` abstraction.** Added a typed `FilesRepo` interface (`list`/`findByName`/`create`) with an in-memory `MockFilesRepo` seeded from `mock-data.ts`, exposed via a `getFilesRepo()` singleton (so POST writes are visible to later GETs in-process). Returns defensive copies; never mutates the fixture array. Swapping to Supabase is a change to `getFilesRepo()`, not callers. Covered by `lib/files-repo.test.ts`. `[CODE-cross#2]` `[RUN-8]` High
+- [x] **P2.2 — Split `lib/mock-data.ts`.** Permanent taxonomy → `lib/categories.ts` (`categories`, `isCategory()` guard, `Tab` type derived from `Category`); `lib/mock-data.ts` now holds only deletable fixtures. Updated consumers (`StatStrip`, `UploadDrawer`, dashboard, API route). `[CODE-78]` High
+- [x] **P2.3 — Dashboard fetches through the API/repo, not `mockFiles`.** `app/dashboard/page.tsx` now reads via `getFilesRepo()` — the same repo backing `/api/files` — as the single source of truth. No more `mockFiles` import in the page. `[CODE-cross#1]` High / `[RUN-2]`
+- [x] **P2.4 — Convert dashboard to a Server Component + client island.** Page is now an async Server Component (`force-dynamic`) that fetches server-side and renders `TopNav`/`StatStrip`; interactive bits (tabs, search, view toggle, drawer, conflict) moved to `app/dashboard/DashboardControls.tsx`. Dashboard client JS dropped to ~1.93 kB. `[RUN-1]` High
+- [x] **P2.5 — Add API contract types to `lib/types.ts`.** Added `AuthResponse`, `UploadPayload`, `FilesListResponse`, `UploadResponse`. Route handlers use `NextResponse.json<T>` and client fetches (`app/page.tsx`, `UploadDrawer`) are typed. `[CODE-87]` Medium
+- [x] **P2.6 — Extract shared helpers.** `lib/api-helpers.ts`: `withAuth(handler)` HOF replacing the duplicated `isAuthenticated()` guard, plus `parseJsonBody()`. Name-conflict check centralized in `repo.findByName()`. `[CODE-cross#4]` Medium
+- [x] **P2.7 — Make the upload flow observable.** `POST /api/files` now persists via `repo.create()` and returns the stored row; the drawer's `onSaved` calls `router.refresh()` so the new file appears in the server-rendered grid. `[CODE-cross#3]` Medium
+- [x] **P2.8 — Add `import "server-only"` guards.** Added to `lib/supabase.ts`, `lib/auth.ts`, `lib/files-repo.ts`, `lib/api-helpers.ts`. Vitest aliases `server-only` → `test/stubs/server-only.ts` (no bundler boundary under test). `[SEC-8]` `[CODE-74]` Low
+
+> ℹ️ The mock repo is **in-memory / per-process** — uploads persist only until the server restarts and aren't shared across instances. This is the demo seam; the `FilesRepo` interface is the drop-in point for a durable `SupabaseFilesRepo` (Phase 4 pairs with the real integration). Server-side upload validation is currently light (name + `isCategory`); full hardening is **P3.1**.
 
 ---
 

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { categories } from "@/lib/mock-data";
+import { categories } from "@/lib/categories";
+import type { UploadPayload } from "@/lib/types";
 
 interface Props {
   onClose: () => void;
@@ -18,10 +19,11 @@ export function UploadDrawer({ onClose, onConflict, onSaved }: Props) {
 
   async function handleSave() {
     setSaving(true);
+    const payload: UploadPayload = { name, category, version, notes };
     const res = await fetch("/api/files", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, category, version, notes }),
+      body: JSON.stringify(payload),
     });
     setSaving(false);
 

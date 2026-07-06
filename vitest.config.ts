@@ -10,6 +10,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "."),
+      // Next.js resolves `server-only` via a bundler alias; Vitest has no such
+      // boundary, so point it at an empty stub.
+      "server-only": path.resolve(__dirname, "test/stubs/server-only.ts"),
     },
   },
 });

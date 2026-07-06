@@ -1,39 +1,50 @@
-import { NextRequest, NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
-import { mockFiles } from "@/lib/mock-data";
+import { NextResponse } from "next/server";
+import { withAuth, parseJsonBody } from "@/lib/api-helpers";
+import { getFilesRepo } from "@/lib/files-repo";
+import { isCategory } from "@/lib/categories";
+import type {
+  FilesListResponse,
+  UploadPayload,
+  UploadResponse,
+} from "@/lib/types";
 
 /**
- * STUBBED: returns mock-data.ts instead of querying Supabase.
- * Swap the body for a `getSupabaseServerClient().from("files").select()`
- * call once the `files` table exists (see prd.md §4).
+ * Backed by the mock FilesRepo (lib/files-repo.ts) until Supabase is wired up.
+ * Swapping to Supabase is a change to `getFilesRepo()`, not this handler.
  */
-export async function GET() {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  return NextResponse.json({ files: mockFiles });
-}
+export const GET = withAuth(async () => {
+  const files = await getFilesRepo().list();
+  return NextResponse.json<FilesListResponse>({ files });
+});
 
 /**
- * STUBBED: logs the intended upload and echoes back a fake success.
- * Real implementation: validate type/size, upload to Supabase Storage,
- * upsert the metadata row (prd.md upload flow).
+ * Persists the upload metadata through the repo so the new file shows up in a
+ * subsequent GET (the grid). Storage of the actual binary is still stubbed.
  */
-export async function POST(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export const POST = withAuth(async (req) => {
+  const body = await parseJsonBody<Partial<UploadPayload>>(req);
+
+  const name = String(body?.name ?? "").trim();
+  const category = String(body?.category ?? "");
+  const version = String(body?.version ?? "").trim();
+  const notes = body?.notes ? String(body.notes) : undefined;
+
+  if (!name || !isCategory(category)) {
+    return NextResponse.json<UploadResponse>(
+      { ok: false, error: "Invalid name or category." },
+      { status: 400 }
+    );
   }
 
-  const body = await req.json().catch(() => null);
-  console.log("[stub] would upload installer:", body);
+  const repo = getFilesRepo();
 
-  const nameExists = mockFiles.some(
-    (f) => f.name.toLowerCase() === String(body?.name ?? "").toLowerCase()
-  );
-
-  if (nameExists) {
-    return NextResponse.json({ ok: false, conflict: true }, { status: 409 });
+  if (await repo.findByName(name)) {
+    return NextResponse.json<UploadResponse>(
+      { ok: false, conflict: true },
+      { status: 409 }
+    );
   }
 
-  return NextResponse.json({ ok: true });
-}
+  const file = await repo.create({ name, category, version, notes });
+  return NextResponse.json<UploadResponse>({ ok: true, file });
+});
