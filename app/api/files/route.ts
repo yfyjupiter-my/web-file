@@ -1,12 +1,21 @@
 import { NextResponse } from "next/server";
 import { withAuth, parseJsonBody, requireSameOrigin } from "@/lib/api-helpers";
 import { getFilesRepo } from "@/lib/files-repo";
-import { validateUploadPayload } from "@/lib/validation";
+import {
+  validateUploadPayload,
+  validateFilename,
+  MAX_UPLOAD_BYTES,
+  MAX_UPLOAD_MB,
+} from "@/lib/validation";
+import { getObjectSize, removeObject } from "@/lib/storage";
 import type {
   FilesListResponse,
-  UploadPayload,
+  UploadCommitPayload,
   UploadResponse,
 } from "@/lib/types";
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Backed by whichever FilesRepo `getFilesRepo()` returns (Supabase when
@@ -45,15 +54,17 @@ function parseIntParam(raw: string | null): number | null {
 }
 
 /**
- * Persists the upload metadata through the repo so the new file shows up in a
- * subsequent GET (the grid). Storage of the actual binary is still stubbed.
+ * Step 3 (commit) of the upload flow: the binary has already been PUT to Storage
+ * via the signed URL from POST /api/files/upload-url. Here we validate the
+ * metadata, confirm the object really exists (reading its authoritative size),
+ * and write the row. On any post-upload failure we delete the orphaned object.
  */
 export const POST = withAuth(async (req) => {
   // CSRF defense-in-depth on top of the SameSite=Lax session cookie (SEC-4).
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;
 
-  const body = await parseJsonBody<Partial<UploadPayload>>(req);
+  const body = await parseJsonBody<Partial<UploadCommitPayload>>(req);
 
   const result = validateUploadPayload(body);
   if (!result.ok) {
@@ -63,15 +74,66 @@ export const POST = withAuth(async (req) => {
     );
   }
 
-  const repo = getFilesRepo();
+  const id = String(body?.id ?? "");
+  const storageKey = String(body?.storageKey ?? "");
+  // Bind the object path to the id so a caller can't commit an unrelated path.
+  if (!UUID_RE.test(id) || !storageKey.startsWith(`${id}/`)) {
+    return NextResponse.json<UploadResponse>(
+      { ok: false, error: "Invalid upload reference." },
+      { status: 400 }
+    );
+  }
 
+  // Trust Storage, not the client, for the size — and reject a missing object.
+  const size = await getObjectSize(storageKey);
+  if (size == null) {
+    return NextResponse.json<UploadResponse>(
+      { ok: false, error: "Uploaded file not found. Please retry the upload." },
+      { status: 400 }
+    );
+  }
+  if (size > MAX_UPLOAD_BYTES) {
+    await removeObject(storageKey);
+    return NextResponse.json<UploadResponse>(
+      { ok: false, error: `File exceeds the ${MAX_UPLOAD_MB}MB limit.` },
+      { status: 400 }
+    );
+  }
+
+  // Re-derive the type from the stored filename (don't trust a client-sent type).
+  const fileCheck = validateFilename(storageKey.slice(id.length + 1));
+  if (!fileCheck.ok) {
+    await removeObject(storageKey);
+    return NextResponse.json<UploadResponse>(
+      { ok: false, error: fileCheck.error },
+      { status: 400 }
+    );
+  }
+
+  const repo = getFilesRepo();
   if (await repo.findByName(result.value.name)) {
+    await removeObject(storageKey);
     return NextResponse.json<UploadResponse>(
       { ok: false, conflict: true },
       { status: 409 }
     );
   }
 
-  const file = await repo.create(result.value);
-  return NextResponse.json<UploadResponse>({ ok: true, file });
+  try {
+    const file = await repo.create({
+      ...result.value,
+      id,
+      storageKey,
+      sizeBytes: size,
+      type: fileCheck.type,
+    });
+    return NextResponse.json<UploadResponse>({ ok: true, file });
+  } catch {
+    // Unique-index race or insert failure — don't leave an orphaned object.
+    await removeObject(storageKey);
+    return NextResponse.json<UploadResponse>(
+      { ok: false, error: "Could not save the file. Please retry." },
+      { status: 409 }
+    );
+  }
 });

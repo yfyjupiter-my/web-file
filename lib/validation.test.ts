@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateUploadPayload, UPLOAD_LIMITS } from "./validation";
+import { validateUploadPayload, validateFilename, UPLOAD_LIMITS } from "./validation";
 
 describe("validateUploadPayload", () => {
   const valid = { name: "Setup Wizard", category: "Utilities", version: "v2.4" };
@@ -49,6 +49,33 @@ describe("validateUploadPayload", () => {
     if (r.ok) {
       expect(r.value.version).toBe("");
       expect(r.value.notes).toBeUndefined();
+    }
+  });
+});
+
+describe("validateFilename", () => {
+  it("maps a known extension to its FileType (case-insensitive)", () => {
+    const r = validateFilename("Setup.EXE");
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.type).toBe("EXE");
+      expect(r.safeName.endsWith(".exe")).toBe(true);
+    }
+  });
+
+  it("rejects an unsupported extension", () => {
+    expect(validateFilename("payload.sh").ok).toBe(false);
+    expect(validateFilename("noextension").ok).toBe(false);
+    expect(validateFilename("").ok).toBe(false);
+  });
+
+  it("sanitizes the basename but keeps the extension (traversal defense)", () => {
+    const r = validateFilename("../../evil name!.msi");
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.safeName).not.toMatch(/[/\\]/);
+      expect(r.safeName.endsWith(".msi")).toBe(true);
+      expect(r.type).toBe("MSI");
     }
   });
 });

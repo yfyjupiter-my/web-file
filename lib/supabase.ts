@@ -27,6 +27,16 @@ export function getSupabaseServerClient() {
 
   client ??= createClient(url, serviceRoleKey, {
     auth: { persistSession: false },
+    global: {
+      // Next.js patches global `fetch` and caches responses in Server
+      // Components by default. supabase-js goes through that fetch, so without
+      // this a page render could serve a *stale* list (e.g. an empty table from
+      // the first render) even after new rows are written — freshly uploaded
+      // files would never appear. Force every Supabase call to bypass the Data
+      // Cache so reads always hit the source. (`dynamic`/`noStore` per-route is
+      // easy to forget; this makes the repo correct everywhere.)
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+    },
   });
   return client;
 }

@@ -25,11 +25,15 @@ function FileCardBase({ file }: Props) {
         {file.notes && <div className="card-notes">{file.notes}</div>}
       </div>
       <div className="card-footer">
-        {/* Real download is Supabase-Storage-gated (P4.x); these are
-            keyboard-focusable, labelled buttons in the meantime. */}
-        <button type="button" className="dl" aria-label={`Download ${file.name}`}>
+        {/* Auth-gated route 302s to a short-lived Supabase signed URL, so the
+            browser downloads the binary straight from Storage. */}
+        <a
+          className="dl"
+          href={`/api/files/${file.id}/download`}
+          aria-label={`Download ${file.name}`}
+        >
           Download
-        </button>
+        </a>
         <button type="button" aria-label={`More actions for ${file.name}`}>
           ⋯
         </button>

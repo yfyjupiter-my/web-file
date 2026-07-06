@@ -518,7 +518,8 @@ body::before {
     display: flex;
     border-top: 1px solid var(--border);
   }
-  .card-footer > button {
+  .card-footer > button,
+  .card-footer > a {
     flex: 1;
     height: 40px;
     display: flex;
@@ -531,11 +532,14 @@ body::before {
     background: none;
     border: none;
     font-family: inherit;
+    text-decoration: none;
   }
-  .card-footer > button:hover {
+  .card-footer > button:hover,
+  .card-footer > a:hover {
     color: var(--text);
   }
-  .card-footer > button:focus-visible {
+  .card-footer > button:focus-visible,
+  .card-footer > a:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: -2px;
   }
@@ -670,6 +674,14 @@ body::before {
   .drawer-dropzone small {
     font-size: 12px;
     color: var(--text-dim);
+  }
+  .drawer-dropzone.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .drawer-dropzone:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 
   /* 5.12 Labeled field */

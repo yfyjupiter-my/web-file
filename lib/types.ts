@@ -28,12 +28,37 @@ export interface AuthResponse {
   error?: string;
 }
 
-/** Client-supplied body for `POST /api/files`. All fields are untrusted input. */
+/** Client-supplied metadata body for `POST /api/files`. All fields untrusted. */
 export interface UploadPayload {
   name: string;
   category: string;
   version: string;
   notes?: string;
+}
+
+/** Body for `POST /api/files/upload-url` — step 1 of the upload flow. */
+export interface UploadUrlPayload {
+  name: string;
+  filename: string;
+}
+
+/** Response from `POST /api/files/upload-url`. */
+export interface UploadUrlResponse {
+  ok: boolean;
+  /** Absolute URL the browser PUTs the file bytes to (self-authorizing). */
+  uploadUrl?: string;
+  /** Pre-assigned id + object path to echo back on commit. */
+  id?: string;
+  storageKey?: string;
+  conflict?: boolean;
+  error?: string;
+}
+
+/** Commit body for `POST /api/files` — step 3, after the binary is uploaded. */
+export interface UploadCommitPayload extends UploadPayload {
+  id: string;
+  storageKey: string;
+  sizeBytes: number;
 }
 
 /** Response from `GET /api/files`. */

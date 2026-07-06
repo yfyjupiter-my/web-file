@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseSizeLabelMB, formatStorageMB, computeFileStats } from "./stats";
+import { parseSizeLabelMB, formatStorageMB, formatBytes, computeFileStats } from "./stats";
 import type { InstallerFile } from "./types";
 
 describe("parseSizeLabelMB", () => {
@@ -22,6 +22,18 @@ describe("formatStorageMB", () => {
     expect(formatStorageMB(512)).toBe("512 MB");
     expect(formatStorageMB(2048)).toBe("2.0 GB");
     expect(formatStorageMB(3 * 1024 * 1024)).toBe("3.0 TB");
+  });
+});
+
+describe("formatBytes", () => {
+  it("scales bytes to KB/MB/GB and matches the parse format", () => {
+    expect(formatBytes(0)).toBe("—");
+    expect(formatBytes(512)).toBe("512 B");
+    expect(formatBytes(2048)).toBe("2 KB");
+    expect(formatBytes(48 * 1024 * 1024)).toBe("48.0 MB");
+    expect(formatBytes(3 * 1024 * 1024 * 1024)).toBe("3.0 GB");
+    // Round-trips through parseSizeLabelMB so StatStrip totals stay correct.
+    expect(parseSizeLabelMB(formatBytes(48 * 1024 * 1024))).toBeCloseTo(48);
   });
 });
 

@@ -27,6 +27,22 @@ export function formatStorageMB(totalMB: number): string {
   return `${Math.round(totalMB)} MB`;
 }
 
+/**
+ * Format a raw byte count into a display label (e.g. "48.2 MB"). Kept in the
+ * KB/MB/GB shape that `parseSizeLabelMB` understands, so StatStrip totals still
+ * work. Non-positive/unknown sizes render as the placeholder "—".
+ */
+export function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "—";
+  const KB = 1024;
+  const MB = KB * 1024;
+  const GB = MB * 1024;
+  if (bytes >= GB) return `${(bytes / GB).toFixed(1)} GB`;
+  if (bytes >= MB) return `${(bytes / MB).toFixed(1)} MB`;
+  if (bytes >= KB) return `${Math.round(bytes / KB)} KB`;
+  return `${bytes} B`;
+}
+
 /** Derived dashboard stats — computed from the data, never hardcoded (CODE-60/61). */
 export interface FileStats {
   total: number;

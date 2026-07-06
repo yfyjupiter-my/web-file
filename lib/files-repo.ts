@@ -3,6 +3,7 @@ import "server-only";
 import type { InstallerFile } from "./types";
 import { mockFiles } from "./mock-data";
 import { getSupabaseServerClient } from "./supabase";
+import { formatBytes } from "./stats";
 
 /**
  * The single seam between the app and its data source.
@@ -22,6 +23,8 @@ export interface FilesRepo {
   findByName(name: string): Promise<InstallerFile | null>;
   /** Persist a new file and return the stored row. */
   create(input: NewFileInput): Promise<InstallerFile>;
+  /** The private-bucket object path for a file id, or null if unknown/mock. */
+  getStorageKey(id: string): Promise<string | null>;
 }
 
 /** Pagination window for `list()`. Omit `limit` to fetch everything. */
@@ -36,12 +39,21 @@ export interface ListResult {
   total: number;
 }
 
-/** Fields the caller supplies; the repo assigns id/type/size/timestamp. */
+/**
+ * Fields the caller supplies. `id`/`type`/`sizeBytes`/`storageKey` come from the
+ * upload flow (a real binary was stored); when omitted (mock/metadata-only), the
+ * repo assigns an id and placeholder type/size.
+ */
 export interface NewFileInput {
   name: string;
   category: InstallerFile["category"];
   version: string;
   notes?: string;
+  /** Pre-generated id used to derive the storage path (must match storageKey). */
+  id?: string;
+  type?: InstallerFile["type"];
+  sizeBytes?: number;
+  storageKey?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -79,20 +91,24 @@ class MockFilesRepo implements FilesRepo {
 
   async create(input: NewFileInput): Promise<InstallerFile> {
     const file: InstallerFile = {
-      // Server-generated UUID. Any future storage key derives from this, never
-      // from the user-supplied name — prevents path traversal (SEC-6/P3.1).
-      id: crypto.randomUUID(),
+      // Server-generated UUID unless the upload flow pre-assigned one. Storage
+      // keys derive from the id, never the user name — path-traversal defense.
+      id: input.id ?? crypto.randomUUID(),
       name: input.name,
-      // Demo storage doesn't inspect the binary, so type/size are placeholders.
-      type: "EXE",
+      type: input.type ?? "EXE",
       category: input.category,
       version: input.version || "—",
-      sizeLabel: "—",
+      sizeLabel: input.sizeBytes != null ? formatBytes(input.sizeBytes) : "—",
       uploadedAt: new Date().toISOString().slice(0, 10),
       notes: input.notes,
     };
     this.files.unshift(file);
     return { ...file };
+  }
+
+  // Mock mode has no Storage backend; downloads aren't available.
+  async getStorageKey(): Promise<string | null> {
+    return null;
   }
 }
 
@@ -101,7 +117,7 @@ class MockFilesRepo implements FilesRepo {
 // ---------------------------------------------------------------------------
 
 /** Columns selected from `public.files` (snake_case, DB shape). */
-const COLS = "id,name,type,category,version,size_label,uploaded_at,notes";
+const COLS = "id,name,type,category,version,size_bytes,uploaded_at,notes";
 
 /** DB row shape returned by the selects above. */
 interface FileRow {
@@ -110,7 +126,7 @@ interface FileRow {
   type: string;
   category: string;
   version: string;
-  size_label: string;
+  size_bytes: number;
   uploaded_at: string;
   notes: string | null;
 }
@@ -123,7 +139,8 @@ function mapRow(r: FileRow): InstallerFile {
     type: r.type as InstallerFile["type"],
     category: r.category as InstallerFile["category"],
     version: r.version,
-    sizeLabel: r.size_label,
+    // Display label derived from the authoritative byte count.
+    sizeLabel: formatBytes(Number(r.size_bytes)),
     // Column is timestamptz; the UI only shows the calendar date.
     uploadedAt: String(r.uploaded_at).slice(0, 10),
     notes: r.notes ?? undefined,
@@ -170,25 +187,37 @@ class SupabaseFilesRepo implements FilesRepo {
 
   async create(input: NewFileInput): Promise<InstallerFile> {
     const client = getSupabaseServerClient();
-    // Server-generated id; storage_key derives from it, never the name (P3.1).
-    const id = crypto.randomUUID();
+    // Storage key derives from the id, never the name (P3.1). The upload flow
+    // pre-assigns both so the object path and metadata row agree.
+    const id = input.id ?? crypto.randomUUID();
     const { data, error } = await client
       .from("files")
       .insert({
         id,
         name: input.name,
-        type: "EXE",
+        type: input.type ?? "EXE",
         category: input.category,
         version: input.version || "—",
-        size_label: "—",
+        size_bytes: input.sizeBytes ?? 0,
         notes: input.notes ?? null,
-        storage_key: id,
+        storage_key: input.storageKey ?? id,
       })
       .select(COLS)
       .single();
 
     if (error) throw new Error(`files.create failed: ${error.message}`);
     return mapRow(data as FileRow);
+  }
+
+  async getStorageKey(id: string): Promise<string | null> {
+    const client = getSupabaseServerClient();
+    const { data, error } = await client
+      .from("files")
+      .select("storage_key")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw new Error(`files.getStorageKey failed: ${error.message}`);
+    return (data?.storage_key as string | undefined) ?? null;
   }
 }
 

@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "migrate": "node --env-file=.env.local scripts/migrate.mjs"
+    "migrate": "node --env-file=.env.local scripts/migrate.mjs",
+    "setup:storage": "node --env-file=.env.local scripts/setup-storage.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
