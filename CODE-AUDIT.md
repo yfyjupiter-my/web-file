@@ -142,3 +142,29 @@ _Date: 2026-07-03_
 18. Various naming/clarity nits (`data-theme="sunset"` hardcoded, `PasswordGatePage` naming, missing `typecheck` script, unprepared `next.config.js` for large-upload risk called out in prd.md).
 
 **Noted only in passing (out of scope for this audit):** inert non-interactive `div`s lacking keyboard/ARIA semantics (`FileCard`, dashboard tabs); no rate limiting on `/api/auth`; no pagination/virtualization for file lists. These belong to the accessibility, security, and performance audits respectively.
+
+---
+
+# Code Quality & Architecture — overall re-check
+
+_Date: 2026-07-07 — full-repo sweep at HEAD `73e2cac`_
+
+Item: `clientKey()` duplicated across auth routes
+   Verdict: ⚠️ Improvement
+   Notes: Identical helper in `app/api/auth/route.ts:9` and `app/api/auth/change-password/route.ts:10`; both routes also repeat the same 429 rate-limit block. Any fix to the X-Forwarded-For trust issue (see SEC-AUDIT 2026-07-07) must now be made twice.
+   Required Actions: Extract `clientKey` (and optionally a `withRateLimit` wrapper) into `lib/api-helpers.ts`.
+
+Item: Route `id` parsed by splitting `req.nextUrl.pathname` in four handlers
+   Verdict: ⚠️ Improvement
+   Notes: `[id]/route.ts` (×2), `[id]/download/route.ts`, and `[id]/replace-url/route.ts` each slice path segments manually because `withAuth`'s `Handler` type drops Next's second `context` argument that carries `params`. Fragile against route re-nesting, and the UUID shape check (`UUID_RE`) exists only in `app/api/files/route.ts`.
+   Required Actions: Widen `withAuth` to pass through `(req, context)` and read `context.params.id`; hoist `UUID_RE` into a shared `validateId` helper used by all four routes.
+
+Item: Layering and seams
+   Verdict: ✅ Correct
+   Notes: Clean repo seam (FilesRepo/SettingsRepo/CategoriesRepo with mock fallbacks), all validation centralized in `lib/validation.ts`, `server-only` guards on secret-touching modules, typed API payloads in `lib/types.ts`, tests co-located for auth/validation/rate-limit/repos.
+   Required Actions: None.
+
+## Remediation — 2026-07-07
+
+- `clientKey` extracted to lib/api-helpers.ts (single copy, trust-aware).
+- `withAuth` now passes Next's route context through; all four `[id]` routes read `await context.params` instead of splitting the pathname, and share `isUuid()` from lib/validation.ts (local `UUID_RE` in files/route.ts removed).

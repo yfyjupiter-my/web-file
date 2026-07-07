@@ -94,3 +94,64 @@ _Date: 2026-07-03_
 | 11 | Timing-safe password compare | Correctly implemented |
 
 **Top priority**: Finding 1 — the session mechanism provides no cryptographic guarantee, and every other control (middleware gating, API route checks) depends on trusting that single static cookie value. This should be fixed before the app handles any real files.
+
+---
+
+# Security Vulnerabilities Audit — overall re-check
+
+_Date: 2026-07-07 — full-repo sweep at HEAD `73e2cac`_
+
+Item: Dependency vulnerabilities — `next@^14.2.5` (and bundled `postcss`)
+   Verdict: ❌ Issue (High)
+   Notes: `npm audit --omit=dev` reports 1 high + 1 moderate against the installed `next` 14.2.x line: DoS via Image Optimizer `remotePatterns` (GHSA-9g9p-9gw9-jx7f), HTTP request smuggling in rewrites (GHSA-ggv3-7p47-pfv8), middleware/proxy cache poisoning (GHSA-3g8h-86w9-wvmq), RSC cache poisoning (GHSA-wfc6-r584-vfw7), SSRF via WebSocket upgrades (GHSA-c4j6-fc7j-m34r), XSS with CSP nonces (GHSA-ffhc-5mcf-pf4q), i18n middleware bypass (GHSA-36qx-fr4f-26g5), plus several RSC DoS advisories. Full audit (with dev deps) shows 10 vulns incl. 1 critical. The CI gate `npm audit --audit-level=high` (ci.yml) will fail on the current lockfile. The app uses `next/image` `remotePatterns` and middleware, so several advisories are directly relevant.
+   Required Actions:
+   - Upgrade `next` (and `eslint-config-next`) to the latest patched release; `npm audit fix` for the rest; re-run `npm audit --audit-level=high` and the test suite.
+   - Until upgraded, treat self-hosted deploys of the standalone output as exposed to the image-optimizer DoS.
+
+Item: Login/change-password rate limiting keyed on client-controlled `X-Forwarded-For`
+   Verdict: ❌ Issue (Medium–High, deployment-dependent)
+   Notes: `clientKey()` in `app/api/auth/route.ts:9` and `app/api/auth/change-password/route.ts:10` takes the first `x-forwarded-for` entry verbatim. Behind a trusted proxy (Vercel) this is fine, but `next.config.js` builds a `standalone` output for self-hosting — there, an attacker sets a fresh XFF value per request and gets 5 free attempts per fake IP, defeating SEC-2 brute-force throttling entirely (bounded only by `MAX_KEYS=10000` eviction). Conversely, an attacker can spoof a victim's IP to lock the victim out.
+   Required Actions:
+   - Only honor `x-forwarded-for` when a trusted-proxy flag (env) is set; otherwise use the socket address.
+   - Add a secondary global bucket (total failures/minute across all keys) so key-rotation can't bypass throttling.
+
+Item: No session revocation — password change/logout do not invalidate outstanding tokens
+   Verdict: ⚠️ Improvement (Medium)
+   Notes: Sessions are stateless HMAC tokens (lib/session.ts) valid for 7 days. Changing the site password (`setSitePassword`) leaves every existing session valid until `exp`; logout only clears the cookie client-side, so a stolen/copied token keeps working. For a shared-password vault, rotating the password is exactly the "revoke everyone" action an admin will reach for — and it currently doesn't.
+   Required Actions:
+   - Embed a key-version/generation claim in the token (bump it on password change) or derive the HMAC key from `COOKIE_SECRET + password-hash` so a password change invalidates all sessions.
+
+Item: Logout route lacks the same-origin (CSRF) guard
+   Verdict: ⚠️ Improvement (Low)
+   Notes: `app/api/auth/logout/route.ts` POST has no `requireSameOrigin` call (all other mutating routes have it). Worst case is forced logout — nuisance only.
+   Required Actions: Add `requireSameOrigin(req)` for consistency.
+
+Item: Security headers — no full CSP, no Permissions-Policy, HSTS platform-dependent
+   Verdict: ⚠️ Improvement (Low–Medium)
+   Notes: next.config.js sets frame-ancestors/nosniff/referrer (SEC-5) — good. There is still no `script-src`/`object-src` CSP (the only inline script is the static theme snippet in app/layout.tsx, so a nonce/sha CSP is feasible), no `Permissions-Policy`, and HSTS relies on the hosting platform.
+   Required Actions: Add `Permissions-Policy` (camera=(), microphone=(), geolocation=()); layer a script CSP; confirm HSTS at the platform or add `Strict-Transport-Security` for standalone deploys.
+
+Item: `COOKIE_SECRET` minimum length is 16 chars
+   Verdict: ⚠️ Improvement (Low)
+   Notes: lib/session.ts:27 accepts >=16 chars for an HMAC-SHA256 key; .env.example suggests 32 random bytes. 16 lowers the brute-force floor if someone sets a short value.
+   Required Actions: Raise the floor to 32 chars (and mention entropy, not just length, in the error).
+
+Item: Session token integrity, password verification, and boot-time env validation
+   Verdict: ✅ Correct
+   Notes: HMAC-SHA256-signed tokens with expiry, constant-time verify via `crypto.subtle.verify`, fail-closed parsing (lib/session.ts); scrypt-hashed password override with per-hash salt, `crypto.timingSafeEqual` for the env-password path, placeholder passwords refused (lib/auth.ts); production boot refuses placeholder/short secrets (instrumentation.ts). Prior audit findings 1–5 are all remediated.
+   Required Actions: None.
+
+Item: Storage/upload security model
+   Verdict: ✅ Correct
+   Notes: Private bucket, 300s signed download URLs, signed upload URLs minted server-side; object paths bound to server-generated UUIDs (`${id}/${safeName}`) with sanitized basenames and an extension allowlist; size read back from Storage (never trusted from the client) with over-limit objects deleted; RLS enabled default-deny with the service-role key kept server-only (`server-only` imports, ADR 0001).
+   Required Actions: None. (Optional hardening: rate-limit `upload-url` minting per session to cap storage abuse.)
+
+## Remediation — 2026-07-07
+
+- **Dependencies**: upgraded `next` 14.2.x → 16.2.10, `react`/`react-dom` → 19.2, `eslint`→9 + flat config (`next lint` removed in Next 16; `lint` script now runs `eslint .`), `vitest`→4. `npm audit --omit=dev` is now 2 moderate (postcss bundled inside next; esbuild via vitest, dev-only) — the CI `--audit-level=high` gate passes.
+- **Rate-limit key**: `clientKey` moved to lib/api-helpers.ts; proxy headers honored only when trusted (`TRUST_PROXY` env or Vercel), otherwise ignored. Added a global failure bucket in lib/rate-limit.ts (25 free, backoff capped at 60s) so XFF rotation can't buy unlimited attempts. Tests added.
+- **Session revocation**: tokens now carry a `gen` claim; `setSitePassword` bumps a persisted `session_generation`, revoking all outstanding sessions. `isAuthenticated()` + the dashboard page enforce it (middleware stays signature+expiry). Change-password re-issues the requester's cookie. Test added.
+- **Logout CSRF**: `requireSameOrigin` added to /api/auth/logout.
+- **COOKIE_SECRET**: minimum raised 16 → 32 chars (session.ts, instrumentation.ts, .env.example). NOTE: deploys with a shorter secret must rotate it before upgrading.
+- **Headers**: added `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`. Full script CSP still deferred.
+- Verified: lint/typecheck/48 tests/production build green; runtime smoke test confirmed login, CSRF 403, tampered-token 401, dashboard gating, and all security headers.

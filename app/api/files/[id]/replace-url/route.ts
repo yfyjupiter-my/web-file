@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth, parseJsonBody, requireSameOrigin } from "@/lib/api-helpers";
 import { getFilesRepo } from "@/lib/files-repo";
-import { validateFilename } from "@/lib/validation";
+import { isUuid, validateFilename } from "@/lib/validation";
 import { createUploadTarget } from "@/lib/storage";
 import type { ReplaceUrlPayload, ReplaceUrlResponse } from "@/lib/types";
 
@@ -11,12 +11,17 @@ import type { ReplaceUrlPayload, ReplaceUrlResponse } from "@/lib/types";
  * browser PUTs the bytes to directly (mirrors upload-url, but reuses the id
  * instead of minting a new one so the row/version history stays put).
  */
-export const POST = withAuth(async (req) => {
+export const POST = withAuth(async (req, context) => {
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;
 
-  const segments = req.nextUrl.pathname.split("/");
-  const id = segments[segments.length - 2] ?? "";
+  const { id } = await context.params;
+  if (!isUuid(id)) {
+    return NextResponse.json<ReplaceUrlResponse>(
+      { ok: false, error: "File not found." },
+      { status: 404 }
+    );
+  }
 
   const existing = await getFilesRepo().getStorageKey(id);
   if (existing == null) {

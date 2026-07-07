@@ -52,6 +52,7 @@ export function DashboardControls({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<InstallerFile[] | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [editTarget, setEditTarget] = useState<InstallerFile | null>(null);
 
   // P4.3 (frontend half) — debounce the search input so filtering doesn't run
@@ -73,9 +74,17 @@ export function DashboardControls({
 
   // A changed filter can hide previously-selected rows; drop the selection
   // rather than let "3 selected" silently refer to now-invisible files.
-  useEffect(() => {
+  // Done in the change handlers (not an effect) so it happens in the same
+  // render pass as the filter change.
+  function selectTab(tab: Tab) {
+    setActiveTab(tab);
     setSelectedIds(new Set());
-  }, [activeTab, debouncedQuery]);
+  }
+
+  function changeQuery(value: string) {
+    setQuery(value);
+    setSelectedIds(new Set());
+  }
 
   const selectedFiles = useMemo(
     () => initialFiles.filter((f) => selectedIds.has(f.id)),
@@ -115,12 +124,23 @@ export function DashboardControls({
 
   async function handleBulkDelete() {
     setDeleting(true);
+    setDeleteError(null);
     try {
-      await Promise.all(
+      const results = await Promise.allSettled(
         selectedFiles.map((f) => fetch(`/api/files/${f.id}`, { method: "DELETE" }))
       );
-      setSelectedIds(new Set());
+      const failed = results.filter(
+        (r) => r.status === "rejected" || !r.value.ok
+      ).length;
+      if (failed > 0) {
+        setDeleteError(
+          `${failed} of ${results.length} file${results.length === 1 ? "" : "s"} could not be deleted. Try again.`
+        );
+      } else {
+        setSelectedIds(new Set());
+      }
       setDeleteTarget(null);
+      // Refresh either way so the table reflects whatever actually happened.
       router.refresh();
     } finally {
       setDeleting(false);
@@ -134,17 +154,18 @@ export function DashboardControls({
           files={initialFiles}
           categories={categories}
           activeTab={activeTab}
-          onSelect={setActiveTab}
+          onSelect={selectTab}
           onAddCategory={() => setAddCategoryOpen(true)}
         />
         <div className="main">
           <div className="toolbar-2">
             <label className="search-inline">
-              🔍{" "}
+              <span aria-hidden="true">🔍</span>{" "}
               <input
+                aria-label="Search installers"
                 placeholder="Search installers…"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => changeQuery(e.target.value)}
               />
             </label>
             <button className="btn btn-upload" onClick={() => setModalOpen(true)}>
@@ -152,9 +173,15 @@ export function DashboardControls({
             </button>
           </div>
 
+          {deleteError && (
+            <div className="error-text" role="alert">
+              {deleteError}
+            </div>
+          )}
+
           {selectedIds.size > 0 && (
             <div className="bulk-bar">
-              <div>{selectedIds.size} selected</div>
+              <div aria-live="polite">{selectedIds.size} selected</div>
               <div className="bulk-bar-actions">
                 <button className="btn ghost" onClick={handleBulkDownload}>
                   Download

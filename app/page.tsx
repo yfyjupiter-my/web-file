@@ -57,16 +57,21 @@ export default function PasswordGatePage() {
               Enter the shared password to browse and download the latest verified installers.
             </div>
             <label className="field">
-              🔑{" "}
+              <span aria-hidden="true">🔑</span>{" "}
               <input
                 type="password"
+                aria-label="Shared password"
                 placeholder="Enter shared password…"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoFocus
               />
             </label>
-            {error && <div className="error-text">{error}</div>}
+            {error && (
+              <div className="error-text" role="alert">
+                {error}
+              </div>
+            )}
             <button className="btn" type="submit" disabled={submitting || !password}>
               {submitting ? "Checking…" : "Unlock Vault →"}
             </button>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ChangePasswordResponse } from "@/lib/types";
+import { useModalA11y } from "./useModalA11y";
 
 interface Props {
   onClose: () => void;
@@ -14,6 +15,7 @@ export function ChangePasswordModal({ onClose }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const overlayRef = useModalA11y(onClose);
 
   async function handleSave() {
     if (newPassword !== confirmPassword) {
@@ -43,7 +45,14 @@ export function ChangePasswordModal({ onClose }: Props) {
   }
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="Change password">
+    <div
+      ref={overlayRef}
+      tabIndex={-1}
+      className="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Change password"
+    >
       <div className="modal">
         <div className="modal-header">
           Change Password
@@ -53,7 +62,7 @@ export function ChangePasswordModal({ onClose }: Props) {
         </div>
         <div className="modal-body">
           {done ? (
-            <p>Your password has been changed.</p>
+            <p role="status">Your password has been changed. Other devices will need to sign in again.</p>
           ) : (
             <div className="form-grid">
               <div className="modal-field full">
@@ -89,7 +98,11 @@ export function ChangePasswordModal({ onClose }: Props) {
             </div>
           )}
         </div>
-        {error && <div className="error-text modal-error">{error}</div>}
+        {error && (
+          <div className="error-text modal-error" role="alert">
+            {error}
+          </div>
+        )}
         <div className="modal-footer">
           <button className="btn ghost" onClick={onClose}>
             {done ? "Close" : "Cancel"}

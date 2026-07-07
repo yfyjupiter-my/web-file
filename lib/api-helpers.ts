@@ -3,20 +3,60 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthenticated } from "./auth";
 
-type Handler = (req: NextRequest) => Promise<NextResponse> | NextResponse;
+/** Next's second route-handler argument; `params` is a Promise since Next 15. */
+export interface RouteContext {
+  params: Promise<Record<string, string>>;
+}
+
+type Handler = (
+  req: NextRequest,
+  context: RouteContext
+) => Promise<NextResponse> | NextResponse;
 
 /**
  * Wraps a route handler with the shared session guard. Returns 401 before the
  * handler runs if the request isn't authenticated, so individual handlers stay
- * focused on their own logic.
+ * focused on their own logic. Passes Next's route context through so handlers
+ * can read `await context.params` instead of re-parsing the pathname.
  */
 export function withAuth(handler: Handler): Handler {
-  return async (req: NextRequest) => {
+  return async (req: NextRequest, context: RouteContext) => {
     if (!(await isAuthenticated())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return handler(req);
+    return handler(req, context);
   };
+}
+
+/**
+ * Whether proxy-supplied client-IP headers can be believed. On managed
+ * platforms (Vercel sets `VERCEL`) the platform strips/overwrites inbound
+ * `X-Forwarded-For`, so it's trustworthy. Anywhere else it's attacker-typed
+ * unless the deployer explicitly vouches for their reverse proxy via
+ * TRUST_PROXY=true.
+ */
+function trustProxyHeaders(): boolean {
+  const flag = process.env.TRUST_PROXY;
+  if (flag != null && flag !== "") {
+    return flag === "1" || flag.toLowerCase() === "true";
+  }
+  return Boolean(process.env.VERCEL);
+}
+
+/**
+ * Best-effort client identifier for throttling. Uses proxy headers only when
+ * they're trustworthy (see trustProxyHeaders) — otherwise every direct client
+ * shares one bucket and the global rate-limit bucket (lib/rate-limit.ts)
+ * carries the brute-force defense.
+ */
+export function clientKey(req: NextRequest): string {
+  if (trustProxyHeaders()) {
+    const forwarded = req.headers.get("x-forwarded-for");
+    if (forwarded) return forwarded.split(",")[0].trim();
+    const real = req.headers.get("x-real-ip");
+    if (real) return real;
+  }
+  return "direct";
 }
 
 /** Parse a JSON request body, returning null on malformed/missing input. */

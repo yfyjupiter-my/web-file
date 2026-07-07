@@ -8,6 +8,7 @@ import {
 } from "@/lib/validation";
 import { formatBytes } from "@/lib/stats";
 import { putWithProgress } from "@/lib/upload-xhr";
+import { useModalA11y } from "./useModalA11y";
 import type {
   InstallerFile,
   ReplaceUrlResponse,
@@ -45,6 +46,10 @@ export function EditFileModal({ file, categories, onClose, onConflict, onSaved }
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Don't let Escape abandon an in-flight save/replace accidentally.
+  const overlayRef = useModalA11y(() => {
+    if (!saving) onClose();
+  });
 
   // Client-side pre-check (the server re-validates authoritatively).
   function onFilePicked(f: File | null) {
@@ -126,7 +131,14 @@ export function EditFileModal({ file, categories, onClose, onConflict, onSaved }
   }
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="Edit installer">
+    <div
+      ref={overlayRef}
+      tabIndex={-1}
+      className="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Edit installer"
+    >
       <div className="modal">
         <div className="modal-header">
           Edit Installer
@@ -150,7 +162,14 @@ export function EditFileModal({ file, categories, onClose, onConflict, onSaved }
                 </div>
                 <div className="upload-progress-pct">{Math.round(progress * 100)}%</div>
               </div>
-              <div className="progress-track">
+              <div
+                className="progress-track"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(progress * 100)}
+                aria-label="Upload progress"
+              >
                 <div className="progress-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
               </div>
             </div>
@@ -245,7 +264,11 @@ export function EditFileModal({ file, categories, onClose, onConflict, onSaved }
             </div>
           </div>
         </div>
-        {error && <div className="error-text modal-error">{error}</div>}
+        {error && (
+          <div className="error-text modal-error" role="alert">
+            {error}
+          </div>
+        )}
         <div className="modal-footer">
           <button className="btn ghost" onClick={onClose}>
             Cancel

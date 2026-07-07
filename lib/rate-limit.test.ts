@@ -45,4 +45,18 @@ describe("rate-limit", () => {
     expect(checkRateLimit("attacker").allowed).toBe(false);
     expect(checkRateLimit("innocent").allowed).toBe(true);
   });
+
+  it("blocks everyone once the global failure budget is spent (key rotation defense)", () => {
+    // Simulate an attacker minting a fresh key (spoofed IP) per attempt.
+    for (let i = 0; i < 30; i++) recordFailure(`fake-ip-${i}`);
+    const res = checkRateLimit("yet-another-fresh-key");
+    expect(res.allowed).toBe(false);
+    expect(res.retryAfterMs).toBeGreaterThan(0);
+  });
+
+  it("does not clear the global bucket on a single key's success", () => {
+    for (let i = 0; i < 30; i++) recordFailure(`fake-ip-${i}`);
+    recordSuccess("fake-ip-0");
+    expect(checkRateLimit("fresh-key").allowed).toBe(false);
+  });
 });

@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { isAuthenticated } from "@/lib/auth";
 import { getFilesRepo } from "@/lib/files-repo";
 import { getCategoriesRepo } from "@/lib/categories-repo";
 import { TopNav } from "@/components/TopNav";
@@ -14,6 +16,10 @@ export const dynamic = "force-dynamic";
  * imported into the client bundle.
  */
 export default async function DashboardPage() {
+  // Middleware already checked the signature; this adds the session-generation
+  // check (revocation on password change) that middleware skips for speed.
+  if (!(await isAuthenticated())) redirect("/");
+
   const [{ files }, categories] = await Promise.all([
     getFilesRepo().list(),
     getCategoriesRepo().list(),

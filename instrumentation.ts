@@ -18,8 +18,8 @@ export async function register() {
   }
 
   const cookieSecret = process.env.COOKIE_SECRET ?? "";
-  if (cookieSecret.length < 16) {
-    problems.push("COOKIE_SECRET is unset or too short (need >= 16 chars).");
+  if (cookieSecret.length < 32) {
+    problems.push("COOKIE_SECRET is unset or too short (need >= 32 chars of random data).");
   }
 
   if (problems.length === 0) return;

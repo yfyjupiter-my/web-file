@@ -8,8 +8,19 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
-import { checkPassword, isAuthenticated, setSitePassword } from "./auth";
-import { createSessionToken, SESSION_COOKIE } from "./session";
+import {
+  checkPassword,
+  getSessionGeneration,
+  isAuthenticated,
+  setSitePassword,
+} from "./auth";
+import { createSessionToken, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from "./session";
+import { getSettingsRepo } from "./settings-repo";
+
+/** Mint a token that matches the current session generation. */
+async function currentToken(maxAge: number = SESSION_MAX_AGE_SECONDS): Promise<string> {
+  return createSessionToken(maxAge, await getSessionGeneration());
+}
 
 describe("checkPassword", () => {
   const original = process.env.SITE_PASSWORD;
@@ -46,6 +57,47 @@ describe("checkPassword", () => {
     expect(await checkPassword("n3wpass")).toBe(true);
     expect(await checkPassword("s3cret")).toBe(false);
   });
+
+  it("does not resurrect SITE_PASSWORD during a transient settings outage", async () => {
+    await setSitePassword("override-pass");
+    expect(await checkPassword("override-pass")).toBe(true);
+
+    const spy = vi
+      .spyOn(getSettingsRepo(), "get")
+      .mockRejectedValue(new Error("db down"));
+    try {
+      // Verifies against the last-known hash, not the superseded env password.
+      expect(await checkPassword("override-pass")).toBe(true);
+      expect(await checkPassword("s3cret")).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
+describe("session revocation (generation)", () => {
+  const originalSecret = process.env.COOKIE_SECRET;
+
+  beforeEach(() => {
+    process.env.COOKIE_SECRET = "unit-test-cookie-secret-0123456789";
+  });
+
+  afterEach(() => {
+    cookieStore.clear();
+    process.env.COOKIE_SECRET = originalSecret;
+  });
+
+  it("revokes tokens issued before a password change", async () => {
+    const before = await currentToken();
+    cookieStore.set(SESSION_COOKIE, { value: before });
+    expect(await isAuthenticated()).toBe(true);
+
+    await setSitePassword("rotated-password");
+    expect(await isAuthenticated()).toBe(false);
+
+    cookieStore.set(SESSION_COOKIE, { value: await currentToken() });
+    expect(await isAuthenticated()).toBe(true);
+  });
 });
 
 describe("isAuthenticated", () => {
@@ -61,7 +113,7 @@ describe("isAuthenticated", () => {
   });
 
   it("is true for a valid signed token", async () => {
-    cookieStore.set(SESSION_COOKIE, { value: await createSessionToken() });
+    cookieStore.set(SESSION_COOKIE, { value: await currentToken() });
     expect(await isAuthenticated()).toBe(true);
   });
 
@@ -88,7 +140,7 @@ describe("isAuthenticated", () => {
   });
 
   it("rejects an expired token", async () => {
-    cookieStore.set(SESSION_COOKIE, { value: await createSessionToken(-10) });
+    cookieStore.set(SESSION_COOKIE, { value: await currentToken(-10) });
     expect(await isAuthenticated()).toBe(false);
   });
 

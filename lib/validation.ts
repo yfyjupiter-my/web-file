@@ -34,6 +34,15 @@ const EXT_TO_TYPE: Record<string, FileType> = {
 /** Human list of accepted extensions, for error/UI copy. */
 export const ALLOWED_EXTENSIONS = Object.keys(EXT_TO_TYPE).map((e) => `.${e}`).join(", ");
 
+// Server-assigned file ids are always crypto.randomUUID(); anything else in a
+// path/`id` field is malformed input (shared by the /api/files routes).
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUuid(value: unknown): value is string {
+  return typeof value === "string" && UUID_RE.test(value);
+}
+
 export type FilenameResult =
   | { ok: true; type: FileType; safeName: string }
   | { ok: false; error: string };

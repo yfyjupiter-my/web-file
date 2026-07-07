@@ -64,8 +64,15 @@ export async function createDownloadUrl(
   return data.signedUrl;
 }
 
-/** Best-effort delete — used to clean up an orphaned object when a commit fails. */
+/**
+ * Best-effort delete — used to clean up an orphaned object when a commit fails.
+ * Failures are logged (not thrown) so the caller's response isn't derailed,
+ * but the leaked key is findable in the logs / by the orphan-cleanup script.
+ */
 export async function removeObject(storageKey: string): Promise<void> {
   const client = getSupabaseServerClient();
-  await client.storage.from(INSTALLERS_BUCKET).remove([storageKey]);
+  const { error } = await client.storage.from(INSTALLERS_BUCKET).remove([storageKey]);
+  if (error) {
+    console.warn(`[storage] failed to remove object "${storageKey}": ${error.message}`);
+  }
 }

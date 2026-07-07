@@ -204,3 +204,34 @@ Item: `app/globals.css` scroll/repaint cost (`background-attachment: fixed` on `
 
 ### Summary
 No new leaks or regressions since the prior full audit — code is unchanged at HEAD `be3fac1`. All previously identified issues (dashboard client-boundary, duplicate grid subtree, unpaginated API, O(n) conflict scan, missing debounce/memoization/code-splitting) remain open and are re-confirmed above. No `useEffect`/timer/listener-based memory leaks exist because no such code exists yet in the repo. Highest-priority items unchanged: **client/server boundary on `app/dashboard/page.tsx`** and **O(n) name-conflict scan in `POST /api/files`** (the latter matters most because it's the pattern most likely to be carried forward verbatim into the real Supabase integration).
+
+---
+
+# Runtime & Performance Leaks — overall re-check
+
+_Date: 2026-07-07 — full-repo sweep at HEAD `73e2cac`_
+
+Item: Orphaned Storage objects from abandoned upload flows
+   Verdict: ❌ Issue (resource leak)
+   Notes: `POST /api/files/upload-url` and `POST /api/files/[id]/replace-url` mint a signed URL and the browser PUTs bytes directly to Storage; the metadata row is only written at commit. If the user closes the tab (or commit validation fails before any `removeObject` path is reached — e.g. `getObjectSize` throwing), the uploaded object stays in the private bucket forever. Nothing sweeps the bucket against the `files` table.
+   Required Actions: Add a periodic cleanup (cron/edge function) deleting bucket objects older than N hours whose `id/` prefix has no matching `files` row.
+
+Item: `removeObject()` swallows errors silently
+   Verdict: ⚠️ Improvement
+   Notes: lib/storage.ts:68 ignores the result of `.remove()`. A failed delete (transient Supabase error) silently leaks the object with no log to find it later.
+   Required Actions: Log failures (key + error) so orphans are discoverable.
+
+Item: In-memory rate-limit store growth
+   Verdict: ✅ Correct
+   Notes: Bounded by `MAX_KEYS=10000` with idle-TTL sweep and oldest-first eviction (lib/rate-limit.ts); cannot OOM. Known limitation (documented): per-instance only — swap for a shared store before scaling out.
+   Required Actions: None now.
+
+Item: Supabase client reuse and cache posture
+   Verdict: ✅ Correct
+   Notes: Client memoized at module scope (P4.8); every Supabase fetch forces `cache: "no-store"` so the Next Data Cache can't serve stale rows; list endpoint is paginated with an index behind it and short private SWR headers.
+   Required Actions: None.
+
+## Remediation — 2026-07-07
+
+- Orphaned-object leak: added `scripts/cleanup-orphans.mjs` (`npm run cleanup:orphans`, `--dry-run` supported; 24h grace period) comparing bucket objects to `files.storage_key` rows.
+- `removeObject` now logs failed deletes (key + reason) instead of swallowing them.

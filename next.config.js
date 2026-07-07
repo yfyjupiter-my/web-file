@@ -8,6 +8,8 @@ const securityHeaders = [
   { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  // The app never needs these browser capabilities; deny them outright.
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
 ];
 
 // P4.9 — the Supabase project host, so next/image can optimize signed thumbnail
@@ -24,8 +26,8 @@ const nextConfig = {
   // P4.9 — self-contained server output (minimal node_modules) for container/
   // serverless deploys; pays off now that a real backend (Supabase) is wired in.
   output: "standalone",
-  // Enables instrumentation.ts (boot-time env validation, SEC-3).
-  experimental: { instrumentationHook: true },
+  // instrumentation.ts (boot-time env validation, SEC-3) is stable in Next 15+;
+  // no experimental flag needed.
   images: {
     remotePatterns: supabaseHost
       ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/**" }]

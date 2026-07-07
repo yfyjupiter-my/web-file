@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkPassword } from "@/lib/auth";
+import { checkPassword, getSessionGeneration } from "@/lib/auth";
 import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, createSessionToken } from "@/lib/session";
 import { checkRateLimit, recordFailure, recordSuccess } from "@/lib/rate-limit";
-import { requireSameOrigin } from "@/lib/api-helpers";
+import { clientKey, requireSameOrigin } from "@/lib/api-helpers";
 import type { AuthResponse } from "@/lib/types";
-
-/** Best-effort client identifier for throttling. Falls back to a shared bucket. */
-function clientKey(req: NextRequest): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return req.headers.get("x-real-ip") ?? "unknown";
-}
 
 export async function POST(req: NextRequest) {
   // CSRF defense-in-depth (SEC-4) — reject positively cross-origin logins.
@@ -39,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   recordSuccess(key);
 
-  const token = await createSessionToken();
+  const token = await createSessionToken(SESSION_MAX_AGE_SECONDS, await getSessionGeneration());
   const res = NextResponse.json<AuthResponse>({ ok: true });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,

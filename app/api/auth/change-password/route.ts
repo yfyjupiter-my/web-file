@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkPassword, isPlaceholderPassword, setSitePassword } from "@/lib/auth";
+import { checkPassword, getSessionGeneration, isPlaceholderPassword, setSitePassword } from "@/lib/auth";
+import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, createSessionToken } from "@/lib/session";
 import { checkRateLimit, recordFailure, recordSuccess } from "@/lib/rate-limit";
-import { parseJsonBody, requireSameOrigin, withAuth } from "@/lib/api-helpers";
+import { clientKey, parseJsonBody, requireSameOrigin, withAuth } from "@/lib/api-helpers";
 import type { ChangePasswordPayload, ChangePasswordResponse } from "@/lib/types";
 
 const MIN_PASSWORD_LENGTH = 8;
-
-/** Best-effort client identifier for throttling — mirrors app/api/auth/route.ts. */
-function clientKey(req: NextRequest): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return req.headers.get("x-real-ip") ?? "unknown";
-}
 
 export const POST = withAuth(async (req: NextRequest) => {
   // CSRF defense-in-depth (SEC-4), same posture as the login route.
@@ -66,5 +60,18 @@ export const POST = withAuth(async (req: NextRequest) => {
       { status: 500 }
     );
   }
-  return NextResponse.json<ChangePasswordResponse>({ ok: true });
+
+  // setSitePassword bumped the session generation, revoking every outstanding
+  // token — including the requester's. Issue them a fresh one so changing the
+  // password doesn't log the admin out mid-session.
+  const token = await createSessionToken(SESSION_MAX_AGE_SECONDS, await getSessionGeneration());
+  const res = NextResponse.json<ChangePasswordResponse>({ ok: true });
+  res.cookies.set(SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: SESSION_MAX_AGE_SECONDS,
+  });
+  return res;
 });

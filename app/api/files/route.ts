@@ -3,6 +3,7 @@ import { withAuth, parseJsonBody, requireSameOrigin } from "@/lib/api-helpers";
 import { getFilesRepo } from "@/lib/files-repo";
 import { getCategoriesRepo } from "@/lib/categories-repo";
 import {
+  isUuid,
   validateUploadPayload,
   validateFilename,
   MAX_UPLOAD_BYTES,
@@ -14,9 +15,6 @@ import type {
   UploadCommitPayload,
   UploadResponse,
 } from "@/lib/types";
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Backed by whichever FilesRepo `getFilesRepo()` returns (Supabase when
@@ -79,7 +77,7 @@ export const POST = withAuth(async (req) => {
   const id = String(body?.id ?? "");
   const storageKey = String(body?.storageKey ?? "");
   // Bind the object path to the id so a caller can't commit an unrelated path.
-  if (!UUID_RE.test(id) || !storageKey.startsWith(`${id}/`)) {
+  if (!isUuid(id) || !storageKey.startsWith(`${id}/`)) {
     return NextResponse.json<UploadResponse>(
       { ok: false, error: "Invalid upload reference." },
       { status: 400 }

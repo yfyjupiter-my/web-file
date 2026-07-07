@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { CreateCategoryResponse } from "@/lib/types";
+import { useModalA11y } from "./useModalA11y";
 
 interface Props {
   onClose: () => void;
@@ -12,6 +13,7 @@ export function AddCategoryModal({ onClose, onSaved }: Props) {
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const overlayRef = useModalA11y(onClose);
 
   async function handleSave() {
     setSaving(true);
@@ -36,7 +38,14 @@ export function AddCategoryModal({ onClose, onSaved }: Props) {
   }
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="Add category">
+    <div
+      ref={overlayRef}
+      tabIndex={-1}
+      className="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Add category"
+    >
       <div className="modal">
         <div className="modal-header">
           Add Category
@@ -61,7 +70,11 @@ export function AddCategoryModal({ onClose, onSaved }: Props) {
             </div>
           </div>
         </div>
-        {error && <div className="error-text modal-error">{error}</div>}
+        {error && (
+          <div className="error-text modal-error" role="alert">
+            {error}
+          </div>
+        )}
         <div className="modal-footer">
           <button className="btn ghost" onClick={onClose}>
             Cancel

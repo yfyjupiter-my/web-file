@@ -3,24 +3,28 @@ import { withAuth, parseJsonBody, requireSameOrigin } from "@/lib/api-helpers";
 import { getFilesRepo } from "@/lib/files-repo";
 import { getCategoriesRepo } from "@/lib/categories-repo";
 import { getObjectSize, removeObject } from "@/lib/storage";
-import { validateFilename, validateUploadPayload } from "@/lib/validation";
+import { isUuid, validateFilename, validateUploadPayload } from "@/lib/validation";
 import type { DeleteResponse, FileType, UpdateFilePayload, UpdateResponse } from "@/lib/types";
 
 /**
- * Deletes one installer: its Storage object (if any) and its metadata row.
- * `id` is the last path segment (mirrors the `[id]/download` route's parsing).
+ * Deletes one installer: its metadata row first, then its Storage object.
+ * Row-first fails safe — if the object delete then fails, we leak an orphan
+ * (swept by scripts/cleanup-orphans.mjs) instead of listing a file whose
+ * binary is gone.
  */
-export const DELETE = withAuth(async (req) => {
+export const DELETE = withAuth(async (req, context) => {
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;
 
-  const segments = req.nextUrl.pathname.split("/");
-  const id = segments[segments.length - 1] ?? "";
+  const { id } = await context.params;
+  if (!isUuid(id)) {
+    return NextResponse.json({ error: "File not found." }, { status: 404 });
+  }
 
   const repo = getFilesRepo();
   const storageKey = await repo.getStorageKey(id);
-  if (storageKey) await removeObject(storageKey);
   await repo.remove(id);
+  if (storageKey) await removeObject(storageKey);
 
   return NextResponse.json<DeleteResponse>({ ok: true });
 });
@@ -31,12 +35,17 @@ export const DELETE = withAuth(async (req) => {
  * `POST /api/files/:id/replace-url` upload (the old object is removed after
  * the row commits successfully).
  */
-export const PATCH = withAuth(async (req) => {
+export const PATCH = withAuth(async (req, context) => {
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;
 
-  const segments = req.nextUrl.pathname.split("/");
-  const id = segments[segments.length - 1] ?? "";
+  const { id } = await context.params;
+  if (!isUuid(id)) {
+    return NextResponse.json<UpdateResponse>(
+      { ok: false, error: "File not found." },
+      { status: 404 }
+    );
+  }
 
   const body = await parseJsonBody<Partial<UpdateFilePayload>>(req);
   const validCategories = await getCategoriesRepo().list();

@@ -28,7 +28,19 @@ const IDLE_TTL_MS = 60 * 60 * 1_000; // forget a key after 1h of no activity
 const MAX_KEYS = 10_000; // hard cap so a spray of unique IPs can't OOM us
 const ALERT_THRESHOLD = FREE_ATTEMPTS * 4; // structured "alert" log past this many fails
 
+// Global (all-keys) failure bucket: per-key throttling is only as strong as
+// the key, and the key can come from a spoofable X-Forwarded-For header. This
+// second bucket counts *every* failure regardless of key, so rotating fake
+// IPs can't buy unlimited attempts. Thresholds are looser than per-key (so
+// honest users aren't punished for someone else's typos) and the block is
+// capped short (so a deliberate failure-spray can't lock the site for long —
+// it degrades brute force to ~1 guess/minute instead).
+const GLOBAL_FREE_ATTEMPTS = 25;
+const GLOBAL_BASE_DELAY_MS = 500;
+const GLOBAL_MAX_BLOCK_MS = 60 * 1_000; // 1 minute
+
 const store = new Map<string, Attempt>();
+let globalAttempt: Attempt = { failures: 0, blockedUntil: 0, lastSeen: 0 };
 
 /** Drop stale entries; called opportunistically so the map can't grow forever. */
 function sweep(now: number): void {
@@ -53,9 +65,18 @@ export interface RateLimitResult {
 
 /** Check whether `key` may attempt a login right now. Does not mutate state. */
 export function checkRateLimit(key: string): RateLimitResult {
+  const now = Date.now();
+
+  // Reset the global counter after a quiet hour so old noise doesn't linger.
+  if (globalAttempt.lastSeen && now - globalAttempt.lastSeen > IDLE_TTL_MS) {
+    globalAttempt = { failures: 0, blockedUntil: 0, lastSeen: 0 };
+  }
+  if (globalAttempt.blockedUntil > now) {
+    return { allowed: false, retryAfterMs: globalAttempt.blockedUntil - now };
+  }
+
   const rec = store.get(key);
   if (!rec) return { allowed: true, retryAfterMs: 0 };
-  const now = Date.now();
   if (rec.blockedUntil > now) {
     return { allowed: false, retryAfterMs: rec.blockedUntil - now };
   }
@@ -77,6 +98,15 @@ export function recordFailure(key: string): void {
 
   store.set(key, rec);
 
+  // Count against the global bucket too — key rotation can't dodge this one.
+  globalAttempt.failures += 1;
+  globalAttempt.lastSeen = now;
+  if (globalAttempt.failures > GLOBAL_FREE_ATTEMPTS) {
+    const over = globalAttempt.failures - GLOBAL_FREE_ATTEMPTS;
+    globalAttempt.blockedUntil =
+      now + Math.min(GLOBAL_BASE_DELAY_MS * 2 ** (over - 1), GLOBAL_MAX_BLOCK_MS);
+  }
+
   if (rec.failures === ALERT_THRESHOLD) {
     // Lightweight alerting hook: never logs the attempted password.
     console.warn(
@@ -95,4 +125,5 @@ export function recordSuccess(key: string): void {
 /** Test-only: reset all throttle state. */
 export function _resetRateLimit(): void {
   store.clear();
+  globalAttempt = { failures: 0, blockedUntil: 0, lastSeen: 0 };
 }

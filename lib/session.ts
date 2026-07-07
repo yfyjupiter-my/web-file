@@ -24,9 +24,11 @@ const decoder = new TextDecoder();
 
 function getSecret(): string {
   const secret = process.env.COOKIE_SECRET;
-  if (!secret || secret.length < 16) {
+  // 32+ chars for an HMAC-SHA256 key; length is the floor, entropy is the
+  // point — generate it randomly (see .env.example), don't type a phrase.
+  if (!secret || secret.length < 32) {
     throw new Error(
-      "COOKIE_SECRET is missing or too short (need >= 16 chars). Refusing to issue/verify sessions."
+      "COOKIE_SECRET is missing or too short (need >= 32 chars of random data). Refusing to issue/verify sessions."
     );
   }
   return secret;
@@ -56,14 +58,19 @@ async function importKey(secret: string): Promise<CryptoKey> {
   );
 }
 
-/** Issue a fresh signed session token. Throws if COOKIE_SECRET is unset. */
+/**
+ * Issue a fresh signed session token. Throws if COOKIE_SECRET is unset.
+ * `generation` is the current session generation (lib/auth.ts) — bumping it on
+ * password change revokes every previously issued token.
+ */
 export async function createSessionToken(
-  maxAgeSeconds: number = SESSION_MAX_AGE_SECONDS
+  maxAgeSeconds: number = SESSION_MAX_AGE_SECONDS,
+  generation = 0
 ): Promise<string> {
   const key = await importKey(getSecret());
   const exp = Math.floor(Date.now() / 1000) + maxAgeSeconds;
   const sid = crypto.randomUUID();
-  const payload = base64urlEncode(encoder.encode(JSON.stringify({ sid, exp })));
+  const payload = base64urlEncode(encoder.encode(JSON.stringify({ sid, exp, gen: generation })));
   const sigBuf = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
   const sig = base64urlEncode(new Uint8Array(sigBuf));
   return `${payload}.${sig}`;
@@ -72,8 +79,16 @@ export async function createSessionToken(
 /**
  * Verify a session token's signature and expiry. Fails closed (returns false)
  * on any malformed input, bad signature, expired token, or missing secret.
+ *
+ * Pass `expectedGeneration` to additionally require the token's `gen` claim to
+ * match the current session generation (revocation on password change). The
+ * middleware omits it — a cheap signature+expiry gate — while API routes and
+ * the dashboard page enforce it via isAuthenticated().
  */
-export async function verifySessionToken(token: string | undefined | null): Promise<boolean> {
+export async function verifySessionToken(
+  token: string | undefined | null,
+  expectedGeneration?: number
+): Promise<boolean> {
   if (!token) return false;
 
   let secret: string;
@@ -103,9 +118,16 @@ export async function verifySessionToken(token: string | undefined | null): Prom
 
     const claims = JSON.parse(decoder.decode(base64urlDecode(payload))) as {
       exp?: unknown;
+      gen?: unknown;
     };
     if (typeof claims.exp !== "number") return false;
-    return claims.exp > Math.floor(Date.now() / 1000);
+    if (claims.exp <= Math.floor(Date.now() / 1000)) return false;
+    if (expectedGeneration != null) {
+      // Tokens minted before the gen claim existed count as generation 0.
+      const gen = typeof claims.gen === "number" ? claims.gen : 0;
+      if (gen !== expectedGeneration) return false;
+    }
+    return true;
   } catch {
     return false;
   }
