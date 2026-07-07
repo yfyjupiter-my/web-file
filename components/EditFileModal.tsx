@@ -7,6 +7,7 @@ import {
   MAX_UPLOAD_MB,
 } from "@/lib/validation";
 import { formatBytes } from "@/lib/stats";
+import { putWithProgress } from "@/lib/upload-xhr";
 import type {
   InstallerFile,
   ReplaceUrlResponse,
@@ -41,6 +42,7 @@ export function EditFileModal({ file, categories, onClose, onConflict, onSaved }
   const [replacement, setReplacement] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -62,6 +64,7 @@ export function EditFileModal({ file, categories, onClose, onConflict, onSaved }
 
   async function handleSave() {
     setSaving(true);
+    setProgress(0);
     setError(null);
     try {
       let storageKey: string | undefined;
@@ -83,11 +86,7 @@ export function EditFileModal({ file, categories, onClose, onConflict, onSaved }
         }
 
         // 2. Upload the new bytes straight to Storage.
-        const put = await fetch(urlData.uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": replacement.type || "application/octet-stream" },
-          body: replacement,
-        });
+        const put = await putWithProgress(urlData.uploadUrl, replacement, setProgress);
         if (!put.ok) {
           setError("Upload failed while sending the file. Please try again.");
           return;
@@ -136,45 +135,66 @@ export function EditFileModal({ file, categories, onClose, onConflict, onSaved }
           </button>
         </div>
         <div className="modal-body">
-          <div
-            className={`modal-dropzone ${dragOver ? "drag-over" : ""}`}
-            role="button"
-            tabIndex={0}
-            aria-label="Choose a replacement file"
-            onClick={() => inputRef.current?.click()}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
+          {saving && replacement ? (
+            <div className="upload-progress">
+              <div className="upload-progress-row">
+                <div className="upload-progress-icon">
+                  {replacement.name.slice(replacement.name.lastIndexOf(".") + 1).toUpperCase()}
+                </div>
+                <div className="upload-progress-meta">
+                  <b>{replacement.name}</b>
+                  <small>
+                    {formatBytes(Math.round(replacement.size * progress))} of{" "}
+                    {formatBytes(replacement.size)}
+                  </small>
+                </div>
+                <div className="upload-progress-pct">{Math.round(progress * 100)}%</div>
+              </div>
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`modal-dropzone ${dragOver ? "drag-over" : ""}`}
+              role="button"
+              tabIndex={0}
+              aria-label="Choose a replacement file"
+              onClick={() => inputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  inputRef.current?.click();
+                }
+              }}
+              onDragOver={(e) => {
                 e.preventDefault();
-                inputRef.current?.click();
-              }
-            }}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOver(true);
-            }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragOver(false);
-              onFilePicked(e.dataTransfer.files?.[0] ?? null);
-            }}
-          >
-            <div className="up">↑</div>
-            {replacement ? (
-              <small>
-                {replacement.name} · {formatBytes(replacement.size)}
-              </small>
-            ) : (
-              <small>Drag a new {file.type} here to replace it, or click to browse</small>
-            )}
-            <input
-              ref={inputRef}
-              type="file"
-              accept={ACCEPT.join(",")}
-              hidden
-              onChange={(e) => onFilePicked(e.target.files?.[0] ?? null)}
-            />
-          </div>
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                onFilePicked(e.dataTransfer.files?.[0] ?? null);
+              }}
+            >
+              <div className="up">↑</div>
+              {replacement ? (
+                <small>
+                  {replacement.name} · {formatBytes(replacement.size)}
+                </small>
+              ) : (
+                <small>Drag a new {file.type} here to replace it, or click to browse</small>
+              )}
+              <input
+                ref={inputRef}
+                type="file"
+                accept={ACCEPT.join(",")}
+                hidden
+                onChange={(e) => onFilePicked(e.target.files?.[0] ?? null)}
+              />
+            </div>
+          )}
           <div className="form-grid">
             <div className="modal-field">
               <label>Display Name</label>
@@ -231,7 +251,11 @@ export function EditFileModal({ file, categories, onClose, onConflict, onSaved }
             Cancel
           </button>
           <button className="btn" onClick={handleSave} disabled={saving || !name || !category}>
-            {saving ? "Saving…" : "Save Changes"}
+            {saving
+              ? replacement
+                ? `Uploading… ${Math.round(progress * 100)}%`
+                : "Saving…"
+              : "Save Changes"}
           </button>
         </div>
       </div>

@@ -190,6 +190,20 @@
   textarea.drawer-input{height:70px;padding-top:11px;resize:none;}
   .drawer-footer{border-top:1px solid var(--border);padding:18px 22px;display:flex;gap:12px;}
   .drawer-footer .btn{flex:1;height:44px;}
+  .drawer-footer .btn:disabled{opacity:.6;cursor:not-allowed;transform:none;filter:none;}
+
+  /* upload progress (shown in place of dropzone while an .exe is transferring) */
+  .upload-progress{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2);padding:16px;margin-bottom:20px;}
+  .upload-progress-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .upload-progress-icon{width:38px;height:38px;border-radius:10px;flex-shrink:0;background:var(--accent-grad);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;}
+  .upload-progress-meta{flex:1;min-width:0;}
+  .upload-progress-meta b{display:block;font-size:13px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .upload-progress-meta small{font-size:12px;color:var(--text-dim);}
+  .upload-progress-pct{font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0;}
+  .progress-track{height:8px;border-radius:999px;background:var(--border);overflow:hidden;}
+  .progress-fill{height:100%;border-radius:999px;background:var(--accent-grad);transition:width .2s ease;}
+  .upload-progress-cancel{margin-top:10px;text-align:right;font-size:12px;color:var(--text-dim);cursor:pointer;text-decoration:underline;}
+  .upload-progress-cancel:hover{color:var(--accent);}
 
   /* ============================================================
      SCREEN 4 — Toast
@@ -339,6 +353,51 @@
       <div class="drawer-footer">
         <button class="btn ghost">Cancel</button>
         <button class="btn">Save File</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 3b ===== -->
+<div class="page-label">Screen 3b — Upload Drawer: .exe Uploading</div>
+<div class="annot">Same drawer, mid-transfer: the dropzone is replaced by an active progress bar while the .exe uploads; fields stay editable, Save is disabled until complete.</div>
+<div class="screen">
+  <div class="app-topnav">
+    <div class="logo"><span class="mark"></span>Installer Vault</div>
+    <div class="topnav-right"><span class="pill">Admin: On</span><div class="avatar"></div></div>
+  </div>
+  <div class="with-drawer">
+    <div class="dashboard-dim">
+      <div class="mini-list">
+        <div class="mini-row"><div class="mini-icon chip-icon">EXE</div><div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div><div class="mini-dl"></div></div>
+        <div class="mini-row"><div class="mini-icon chip-icon">MSI</div><div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div><div class="mini-dl"></div></div>
+        <div class="mini-row"><div class="mini-icon chip-icon">DMG</div><div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div><div class="mini-dl"></div></div>
+        <div class="mini-row"><div class="mini-icon chip-icon">ZIP</div><div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div><div class="mini-dl"></div></div>
+      </div>
+    </div>
+    <div class="drawer">
+      <div class="drawer-header">Upload Installer <div class="x">✕</div></div>
+      <div class="drawer-body">
+        <div class="upload-progress">
+          <div class="upload-progress-row">
+            <div class="upload-progress-icon">EXE</div>
+            <div class="upload-progress-meta">
+              <b>setup-wizard-2.5.exe</b>
+              <small>54 MB of 84 MB</small>
+            </div>
+            <div class="upload-progress-pct">64%</div>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width:64%;"></div></div>
+          <div class="upload-progress-cancel">Cancel upload</div>
+        </div>
+        <div class="drawer-field"><label>Display Name</label><input class="drawer-input" placeholder="e.g. Setup Wizard 2.4"></div>
+        <div class="drawer-field"><label>Category</label><input class="drawer-input" placeholder="Select category…"></div>
+        <div class="drawer-field"><label>Version / Date</label><input class="drawer-input" placeholder="v2.4 · Jun 28, 2026"></div>
+        <div class="drawer-field"><label>Notes</label><textarea class="drawer-input" placeholder="Optional release notes…"></textarea></div>
+      </div>
+      <div class="drawer-footer">
+        <button class="btn ghost">Cancel</button>
+        <button class="btn" disabled>Uploading… 64%</button>
       </div>
     </div>
   </div>

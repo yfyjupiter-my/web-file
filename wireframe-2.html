@@ -264,6 +264,39 @@
   }
   .drawer-footer > div{flex:1;height:38px;display:flex;align-items:center;justify-content:center;font-size:11px;}
 
+  /* upload progress bar (shown in place of dropzone while an .exe is uploading) */
+  .upload-progress{
+    border:1px solid var(--line);
+    background:var(--g1);
+    padding:14px;
+    margin-bottom:18px;
+  }
+  .upload-progress-row{
+    display:flex;align-items:center;gap:10px;
+    margin-bottom:10px;
+  }
+  .upload-progress-icon{width:30px;height:30px;flex-shrink:0;}
+  .upload-progress-name{height:10px;width:60%;margin-bottom:6px;}
+  .upload-progress-sub{height:7px;width:35%;}
+  .upload-progress-pct{font-size:11px;color:var(--g6);flex-shrink:0;}
+  .progress-track{
+    height:10px;
+    background:var(--g2);
+    border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--g7);
+  }
+  .upload-progress-cancel{
+    margin-top:10px;
+    text-align:right;
+    font-size:10px;
+    color:var(--g6);
+    text-decoration:underline;
+  }
+
   /* existing file list mini (inside dim area, showing context) */
   .mini-list{padding:20px 24px;}
   .mini-row{
@@ -541,6 +574,86 @@
       <div class="drawer-footer">
         <div class="box solid">CANCEL</div>
         <div class="box darker">SAVE FILE</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-label">Screen 3b — Upload Drawer: .exe Uploading (progress bar)</div>
+<div class="annot">Same slide-in drawer as Screen 3, but mid-upload: dropzone is replaced by an active progress bar while the .exe transfers, fields disabled until complete.</div>
+<div class="screen">
+  <div class="app-topnav">
+    <div class="box brand-box">LOGO / APP NAME</div>
+    <div class="topnav-right">
+      <div class="box darker" style="width:90px;height:28px;">ADMIN: ON</div>
+      <div class="box dark avatar-box"></div>
+    </div>
+  </div>
+  <div class="with-drawer">
+    <div class="dashboard-dim">
+      <div class="mini-list">
+        <div class="mini-row">
+          <div class="box mini-icon">EXE</div>
+          <div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div>
+          <div class="box dl mini-dl">GET</div>
+        </div>
+        <div class="mini-row">
+          <div class="box mini-icon">MSI</div>
+          <div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div>
+          <div class="box dl mini-dl">GET</div>
+        </div>
+        <div class="mini-row">
+          <div class="box mini-icon">DMG</div>
+          <div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div>
+          <div class="box dl mini-dl">GET</div>
+        </div>
+        <div class="mini-row">
+          <div class="box mini-icon">ZIP</div>
+          <div class="mini-lines"><div class="mini-line-a"></div><div class="mini-line-b"></div></div>
+          <div class="box dl mini-dl">GET</div>
+        </div>
+      </div>
+    </div>
+    <div class="drawer">
+      <div class="drawer-header">
+        <div class="box hatch" style="height:16px;width:170px;">UPLOAD INSTALLER</div>
+        <div class="box" style="width:24px;height:24px;">✕</div>
+      </div>
+      <div class="drawer-body">
+        <div class="upload-progress">
+          <div class="upload-progress-row">
+            <div class="box mini-icon upload-progress-icon">EXE</div>
+            <div style="flex:1;">
+              <div class="box line upload-progress-name"></div>
+              <div class="box line sm upload-progress-sub"></div>
+            </div>
+            <div class="upload-progress-pct">64%</div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:64%;"></div>
+          </div>
+          <div class="upload-progress-cancel">CANCEL UPLOAD</div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">DISPLAY NAME</div>
+          <div class="box drawer-input"></div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">CATEGORY</div>
+          <div class="box drawer-input"></div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">VERSION / DATE</div>
+          <div class="box drawer-input"></div>
+        </div>
+        <div class="drawer-field">
+          <div class="drawer-field-label">NOTES</div>
+          <div class="box drawer-input" style="height:64px;"></div>
+        </div>
+      </div>
+      <div class="drawer-footer">
+        <div class="box solid">CANCEL</div>
+        <div class="box" style="background:var(--g4);color:var(--g0);">UPLOADING…</div>
       </div>
     </div>
   </div>

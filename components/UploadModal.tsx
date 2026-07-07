@@ -7,6 +7,7 @@ import {
   MAX_UPLOAD_MB,
 } from "@/lib/validation";
 import { formatBytes } from "@/lib/stats";
+import { putWithProgress } from "@/lib/upload-xhr";
 import type {
   UploadCommitPayload,
   UploadResponse,
@@ -31,6 +32,7 @@ export function UploadModal({ categories, onClose, onConflict, onSaved }: Props)
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -61,6 +63,7 @@ export function UploadModal({ categories, onClose, onConflict, onSaved }: Props)
       return;
     }
     setSaving(true);
+    setProgress(0);
     setError(null);
 
     try {
@@ -83,11 +86,7 @@ export function UploadModal({ categories, onClose, onConflict, onSaved }: Props)
       }
 
       // 2. Upload the bytes straight to Storage (bypasses the API body limit).
-      const put = await fetch(urlData.uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type || "application/octet-stream" },
-        body: file,
-      });
+      const put = await putWithProgress(urlData.uploadUrl, file, setProgress);
       if (!put.ok) {
         setError("Upload failed while sending the file. Please try again.");
         return;
@@ -136,45 +135,65 @@ export function UploadModal({ categories, onClose, onConflict, onSaved }: Props)
           </button>
         </div>
         <div className="modal-body">
-          <div
-            className={`modal-dropzone ${dragOver ? "drag-over" : ""}`}
-            role="button"
-            tabIndex={0}
-            aria-label="Choose a file to upload"
-            onClick={() => inputRef.current?.click()}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
+          {saving && file ? (
+            <div className="upload-progress">
+              <div className="upload-progress-row">
+                <div className="upload-progress-icon">
+                  {file.name.slice(file.name.lastIndexOf(".") + 1).toUpperCase()}
+                </div>
+                <div className="upload-progress-meta">
+                  <b>{file.name}</b>
+                  <small>
+                    {formatBytes(Math.round(file.size * progress))} of {formatBytes(file.size)}
+                  </small>
+                </div>
+                <div className="upload-progress-pct">{Math.round(progress * 100)}%</div>
+              </div>
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`modal-dropzone ${dragOver ? "drag-over" : ""}`}
+              role="button"
+              tabIndex={0}
+              aria-label="Choose a file to upload"
+              onClick={() => inputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  inputRef.current?.click();
+                }
+              }}
+              onDragOver={(e) => {
                 e.preventDefault();
-                inputRef.current?.click();
-              }
-            }}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOver(true);
-            }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragOver(false);
-              onFilePicked(e.dataTransfer.files?.[0] ?? null);
-            }}
-          >
-            <div className="up">↑</div>
-            {file ? (
-              <small>
-                {file.name} · {formatBytes(file.size)}
-              </small>
-            ) : (
-              <small>Drag file here or click to browse</small>
-            )}
-            <input
-              ref={inputRef}
-              type="file"
-              accept={ACCEPT.join(",")}
-              hidden
-              onChange={(e) => onFilePicked(e.target.files?.[0] ?? null)}
-            />
-          </div>
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                onFilePicked(e.dataTransfer.files?.[0] ?? null);
+              }}
+            >
+              <div className="up">↑</div>
+              {file ? (
+                <small>
+                  {file.name} · {formatBytes(file.size)}
+                </small>
+              ) : (
+                <small>Drag file here or click to browse</small>
+              )}
+              <input
+                ref={inputRef}
+                type="file"
+                accept={ACCEPT.join(",")}
+                hidden
+                onChange={(e) => onFilePicked(e.target.files?.[0] ?? null)}
+              />
+            </div>
+          )}
           <div className="form-grid">
             <div className="modal-field">
               <label>Display Name</label>
@@ -231,7 +250,7 @@ export function UploadModal({ categories, onClose, onConflict, onSaved }: Props)
             Cancel
           </button>
           <button className="btn" onClick={handleSave} disabled={saving || !name || !file || !category}>
-            {saving ? "Uploading…" : "Save File"}
+            {saving ? `Uploading… ${Math.round(progress * 100)}%` : "Save File"}
           </button>
         </div>
       </div>

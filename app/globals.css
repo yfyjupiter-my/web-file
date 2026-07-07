@@ -912,6 +912,68 @@ body::before {
     outline-offset: 2px;
   }
 
+  /* 5.11b Upload progress (replaces the dropzone while a file is transferring) */
+  .upload-progress {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .upload-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .upload-progress-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    background: var(--accent-grad);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 11px;
+  }
+  .upload-progress-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .upload-progress-meta b {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .upload-progress-meta small {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .upload-progress-pct {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .progress-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--accent-grad);
+    transition: width 0.15s ease;
+  }
+
   /* 5.12 Labeled field */
   .modal-field {
     margin-bottom: 0;
